@@ -1,0 +1,89 @@
+# Rohit Raj Saji — Pokémon-style portfolio
+
+A portfolio you can play. Walk around a pixel-art town, step into buildings to read about
+projects and experience, and catch the wild ROHIT in the tall grass to get in touch. Recruiters
+in a hurry can skip straight to the classic résumé at [`/resume`](http://localhost:3000/resume).
+
+> **Status:** Phases 1–2 of 8 are done — content, classic résumé, SEO, and the pixel-art kit
+> (preview it at [`/dev/sprites`](http://localhost:3000/dev/sprites) while `npm run dev` is
+> running). The playable town is next; until it lands, `/` shows a temporary title screen.
+
+### Your in-game look
+
+Prof. Rohit's sprite is drawn from `avatar` in [`content/site.ts`](content/site.ts): hairstyle
+(`short`, `long`, `buns`, `bald` or `cap`), hair colour, skin tone, glasses, and shirt, coat and
+trouser colours. Shadows and highlights are worked out automatically.
+
+## Quick start
+
+```bash
+npm install
+npm run dev        # http://localhost:3000
+```
+
+## Editing your content
+
+Everything a visitor reads lives in [`content/`](content). You never need to touch game code to
+update the portfolio — the town, the résumé and the search-engine data are all built from these
+files.
+
+| File                                               | What it holds                                                      | Where it shows up                     |
+| -------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------- |
+| [`content/profile.ts`](content/profile.ts)         | Name, contact links, summary, education, certifications, languages | Résumé header, Trainer Card, contact  |
+| [`content/experience.ts`](content/experience.ts)   | Jobs, most recent first                                            | Résumé, the Gym (career)              |
+| [`content/projects.ts`](content/projects.ts)       | Projects                                                           | Résumé, Prof. Rohit's Lab (Pokédex)   |
+| [`content/skills.ts`](content/skills.ts)           | Skill categories                                                   | Résumé, Poké Mart (TMs), battle moves |
+| [`content/preferences.ts`](content/preferences.ts) | Roles you're open to                                               | Résumé, the town's job board          |
+| [`content/site.ts`](content/site.ts)               | Titles, SEO text, partner and wild Pokémon, sprite source          | Everywhere                            |
+
+The shapes are defined in [`content/types.ts`](content/types.ts), so your editor autocompletes
+fields and the build fails if something is missing or misspelled.
+
+### Example: add a project
+
+Copy an entry in `content/projects.ts` and change it:
+
+```ts
+{
+  id: "new-thing",                       // unique, kebab-case
+  name: "New Thing",
+  tagline: "What it is in a few words",
+  status: "Ongoing",                     // optional
+  summary: "One or two sentences about what you built.",
+  highlightsTitle: "Features",
+  highlights: ["First highlight", "Second highlight"],
+  tags: ["Next.js", "Python"],
+  links: { github: "https://github.com/rohitrajsaji/new-thing" }, // optional
+  mascot: { dex: 150, name: "MEWTWO", types: ["psychic"] },
+},
+```
+
+### Rules of thumb
+
+- **Dates** are `"YYYY-MM"` (e.g. `"2026-03"`). Use `end: "present"` for a current role.
+- **Pokémon** are referenced by National Pokédex number (`dex`). Numbers 1–649 have animated
+  sprites. Names are written in CAPS, as in the games.
+- **Never name the retail client.** A test fails the build if "Costco" appears anywhere.
+- After editing, run `npm run check`. It type-checks, lints, runs the content tests and builds.
+
+## Scripts
+
+| Command          | What it does                                                        |
+| ---------------- | ------------------------------------------------------------------- |
+| `npm run dev`    | Start the dev server                                                |
+| `npm run check`  | Typecheck, lint, test and build — run before every deploy           |
+| `npm test`       | Run the unit and content tests once (`npm run test:watch` to watch) |
+| `npm run format` | Format everything with Prettier                                     |
+
+## Deploying
+
+The site is fully static and deploys to Vercel with no configuration: import the repository in
+Vercel and push. Once you have a custom domain, set `NEXT_PUBLIC_SITE_URL` (for example
+`https://rohitrajsaji.dev`) so canonical links, the sitemap and social cards use it.
+
+## Credits
+
+Pokémon and all related names, sprites and sounds are trademarks and © of Nintendo, Creatures
+Inc. and GAME FREAK Inc. This is a non-commercial fan tribute used as a personal portfolio.
+Official sprites and cries are loaded from [PokeAPI](https://github.com/PokeAPI/sprites); the
+town art, music and code are original.

@@ -1,0 +1,75 @@
+@import "tailwindcss";
+
+/* Colour tokens for the classic pages. The game screens bring their own palette. */
+:root {
+  --paper: #ffffff;
+  --ink: #1d2027;
+  --muted: #5b6270;
+  --line: #e4e6eb;
+  --accent: #cc3326;
+  --chip: #f2f3f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #111318;
+    --ink: #e8eaef;
+    --muted: #a3a9b6;
+    --line: #2a2e38;
+    --accent: #ff6b5b;
+    --chip: #1d2029;
+  }
+}
+
+/* Paper is always white, whatever the screen theme. */
+@media print {
+  :root {
+    --paper: #ffffff;
+    --ink: #000000;
+    --muted: #3a3a3a;
+    --line: #bbbbbb;
+    --accent: #000000;
+    --chip: #ffffff;
+  }
+
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+}
+
+@theme inline {
+  --color-paper: var(--paper);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-chip: var(--chip);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-pixel: var(--font-pixelify), ui-monospace, monospace;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* Keep pixel art crisp when scaled up. */
+.pixelated {
+  image-rendering: pixelated;
+}
+
+/* Yellow-on-blue title lettering, drawn with stacked shadows so it stays blocky. */
+.logo-text {
+  color: #ffcb05;
+  text-shadow:
+    3px 0 #2a4f9b,
+    -3px 0 #2a4f9b,
+    0 3px #2a4f9b,
+    0 -3px #2a4f9b,
+    3px 3px #2a4f9b,
+    -3px 3px #2a4f9b,
+    3px -3px #2a4f9b,
+    -3px -3px #2a4f9b,
+    0 7px #152a55;
+}
