@@ -2,7 +2,7 @@
 import { mix, shade } from "./color";
 import { paintGrid, rle, type Grid } from "./grid";
 import { hash2 } from "./noise";
-import { GLASS, LEAF, OUTLINE, POKEBALL, WHITE, WOOD } from "./palette";
+import { GLASS, GOLD, LEAF, OUTLINE, POKEBALL, STONE, WHITE, WOOD } from "./palette";
 import type { PixelBuffer } from "./pixel-buffer";
 
 export const INTERIOR = {
@@ -217,4 +217,119 @@ export function paintPoster(buf: PixelBuffer, x: number, y: number, colours: [st
   buf.rect(x + 1, y + 1, 10, 8, WHITE);
   buf.rect(x + 2, y + 2, 8, 3, colours[0]);
   buf.rect(x + 2, y + 6, 5, 2, colours[1]);
+}
+
+/** A framed document on the wall, 12×11: a diploma has a blue seal, a certificate a red one. */
+export function paintFrame(
+  buf: PixelBuffer,
+  x: number,
+  y: number,
+  kind: "diploma" | "certificate",
+) {
+  buf.rect(x, y, 12, 11, WOOD.dark);
+  buf.rect(x + 1, y + 1, 10, 9, "#fbf7ea");
+  buf.hline(x + 3, y + 3, 6, "#9aa0b0");
+  buf.hline(x + 3, y + 5, 4, "#9aa0b0");
+  const seal = kind === "diploma" ? "#4b7ad2" : "#d24b4b";
+  buf.rect(x + 7, y + 6, 3, 3, seal);
+  buf.set(x + 7, y + 9, seal);
+  buf.set(x + 9, y + 9, seal);
+}
+
+/** Television on a low stand, 16×20. */
+export function paintTV(buf: PixelBuffer, x: number, y: number) {
+  const s = INTERIOR.screen;
+  buf.shadeEllipse(x + 8, y + 19, 8, 2, 0.8);
+  buf.set(x + 5, y, OUTLINE);
+  buf.set(x + 6, y + 1, OUTLINE);
+  buf.set(x + 11, y, OUTLINE);
+  buf.set(x + 10, y + 1, OUTLINE);
+  buf.rect(x + 1, y + 2, 14, 11, OUTLINE);
+  buf.rect(x + 2, y + 3, 12, 9, "#4a4f63");
+  buf.rect(x + 3, y + 4, 10, 7, s.base);
+  buf.rect(x + 5, y + 5, 6, 4, WHITE);
+  buf.rect(x + 6, y + 6, 2, 2, "#e5463d");
+  buf.hline(x + 9, y + 6, 1, "#9aa0b0");
+  buf.hline(x + 3, y + 10, 10, s.dark);
+  buf.rect(x + 1, y + 13, 14, 6, OUTLINE);
+  buf.rect(x + 2, y + 13, 12, 5, WOOD.base);
+  buf.hline(x + 2, y + 15, 12, WOOD.dark);
+}
+
+/** Single bed, 16×32 (two tiles tall). */
+export function paintBed(buf: PixelBuffer, x: number, y: number) {
+  buf.shadeEllipse(x + 8, y + 31, 8, 2, 0.8);
+  buf.rect(x, y, 16, 31, OUTLINE);
+  buf.rect(x + 1, y + 1, 14, 5, WOOD.base);
+  buf.hline(x + 1, y + 1, 14, WOOD.light);
+  buf.rect(x + 2, y + 6, 12, 6, WHITE);
+  buf.hline(x + 2, y + 11, 12, "#d6d8e2");
+  buf.rect(x + 1, y + 12, 14, 18, "#5a86e0");
+  buf.hline(x + 1, y + 14, 14, "#8cabf2");
+  buf.vline(x + 14, y + 12, 18, "#3f68c4");
+}
+
+/** Shop shelf with boxes and bottles, 16×28. */
+export function paintShelf(buf: PixelBuffer, x: number, y: number) {
+  const m = INTERIOR.metal;
+  const stock = ["#e5463d", "#5a86e0", "#6fd08a", "#f2c94c", "#a56de2"];
+  buf.shadeEllipse(x + 8, y + 28, 8, 2, 0.8);
+  buf.rect(x, y, 16, 28, OUTLINE);
+  buf.rect(x + 1, y + 1, 14, 26, m.light);
+  for (let shelf = 0; shelf < 3; shelf++) {
+    const sy = y + 2 + shelf * 8;
+    for (let i = 0; i < 3; i++) {
+      const colour = stock[(i + shelf * 2) % stock.length];
+      const top = i % 2 ? 1 : 0;
+      buf.rect(x + 2 + i * 4, sy + top, 3, 6 - top, colour);
+      buf.set(x + 2 + i * 4, sy + top, "#ffffff");
+    }
+    buf.hline(x + 1, sy + 6, 14, m.dark);
+  }
+}
+
+/** Small desk for a PC, 16×9. */
+export function paintDesk(buf: PixelBuffer, x: number, y: number) {
+  buf.rect(x, y, 16, 6, OUTLINE);
+  buf.rect(x + 1, y + 1, 14, 4, WOOD.light);
+  buf.hline(x + 1, y + 4, 14, WOOD.dark);
+  for (const lx of [x + 1, x + 13]) buf.rect(lx, y + 6, 2, 3, WOOD.deep);
+}
+
+/** Stone pedestal with a glowing orb in the given colour, 16×28. */
+export function paintPedestal(buf: PixelBuffer, x: number, y: number, orb: string) {
+  buf.shadeEllipse(x + 8, y + 27, 8, 2, 0.8);
+  buf.rect(x + 1, y + 21, 14, 7, OUTLINE);
+  buf.rect(x + 2, y + 22, 12, 5, STONE.dark);
+  buf.hline(x + 2, y + 22, 12, STONE.base);
+  buf.rect(x + 3, y + 10, 10, 11, OUTLINE);
+  buf.rect(x + 4, y + 10, 8, 11, STONE.base);
+  buf.vline(x + 4, y + 10, 11, STONE.light);
+  buf.vline(x + 11, y + 10, 11, STONE.dark);
+  buf.rect(x + 1, y + 8, 14, 3, OUTLINE);
+  buf.rect(x + 2, y + 8, 12, 2, STONE.light);
+  buf.rect(x + 6, y + 13, 4, 3, GOLD.base);
+  buf.fillEllipse(x + 8, y + 5, 4.5, 4.5, OUTLINE);
+  buf.fillEllipse(x + 8, y + 5, 3.5, 3.5, orb);
+  buf.set(x + 6, y + 3, WHITE);
+  buf.set(x + 7, y + 3, WHITE);
+}
+
+/** Gym entrance statue: a stone Poké Ball on a plinth, 16×28. */
+export function paintStatue(buf: PixelBuffer, x: number, y: number) {
+  buf.shadeEllipse(x + 8, y + 27, 8, 2, 0.8);
+  buf.rect(x + 1, y + 14, 14, 14, OUTLINE);
+  buf.rect(x + 2, y + 15, 12, 12, STONE.base);
+  buf.vline(x + 2, y + 15, 12, STONE.light);
+  buf.vline(x + 13, y + 15, 12, STONE.dark);
+  buf.rect(x + 5, y + 19, 6, 3, GOLD.base);
+  buf.fillEllipse(x + 8, y + 8, 6.5, 6.5, OUTLINE);
+  buf.fillEllipse(x + 8, y + 8, 5.5, 5.5, STONE.light);
+  for (let yy = y + 2; yy < y + 8; yy++) {
+    for (let xx = x + 2; xx < x + 14; xx++)
+      if (buf.get(xx, yy) === STONE.light) buf.set(xx, yy, STONE.base);
+  }
+  buf.hline(x + 2, y + 8, 12, OUTLINE);
+  buf.fillEllipse(x + 8, y + 8.5, 2, 2, OUTLINE);
+  buf.set(x + 8, y + 8, STONE.light);
 }

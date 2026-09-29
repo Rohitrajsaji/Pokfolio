@@ -12,8 +12,9 @@ import {
   type Facing,
   type Step,
 } from "@/art/characters";
-import { paintCenterScene, paintGround, paintLabScene, paintTownScene } from "@/art/demo";
+import { paintCenterScene, paintLabScene, paintTownScene } from "@/art/demo";
 import { gridToBuffer } from "@/art/grid";
+import { paintGround } from "@/art/scene";
 import { GLOW_COLORS } from "@/art/palette";
 import { PixelBuffer } from "@/art/pixel-buffer";
 import {

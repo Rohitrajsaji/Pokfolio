@@ -4,9 +4,25 @@ A portfolio you can play. Walk around a pixel-art town, step into buildings to r
 projects and experience, and catch the wild ROHIT in the tall grass to get in touch. Recruiters
 in a hurry can skip straight to the classic résumé at [`/resume`](http://localhost:3000/resume).
 
-> **Status:** Phases 1–2 of 8 are done — content, classic résumé, SEO, and the pixel-art kit
-> (preview it at [`/dev/sprites`](http://localhost:3000/dev/sprites) while `npm run dev` is
-> running). The playable town is next; until it lands, `/` shows a temporary title screen.
+> **Status:** Phases 1–6 of 8 are done: content, classic résumé, SEO, the pixel-art kit, the
+> playable town, menus, every content screen, the professor's Q&A and the catch-to-hire battle.
+> Still to come: music and sound effects, then the title screen, social image, final polish and
+> deploy. The art kit is previewable at [`/dev/sprites`](http://localhost:3000/dev/sprites)
+> while `npm run dev` is running.
+
+### How to play
+
+| Keys               | Touch        | Does                                        |
+| ------------------ | ------------ | ------------------------------------------- |
+| Arrow keys or WASD | D-pad or tap | Walk (tap a building or person to go there) |
+| Z, Enter or Space  | A            | Talk, read, choose                          |
+| X or Backspace     | B            | Back; hold to run                           |
+| M or Esc           | START        | Open the menu                               |
+| Shift              |              | Run                                         |
+
+Every building opens part of the portfolio: the Lab holds the projects (Pokédex), the Career Gym
+the experience, the house the Trainer Card, the Poké Mart the skills and the Pokémon Center the
+contact details. Step into the tall grass to meet the wild ROHIT, and catch it to get in touch.
 
 ### Your in-game look
 
@@ -35,9 +51,14 @@ files.
 | [`content/skills.ts`](content/skills.ts)           | Skill categories                                                   | Résumé, Poké Mart (TMs), battle moves |
 | [`content/preferences.ts`](content/preferences.ts) | Roles you're open to                                               | Résumé, the town's job board          |
 | [`content/site.ts`](content/site.ts)               | Titles, SEO text, partner and wild Pokémon, sprite source          | Everywhere                            |
+| [`content/world.ts`](content/world.ts)             | The town map, buildings, rooms, signs and what everyone says       | The town                              |
+| [`content/qa.ts`](content/qa.ts)                   | The professor's topics, keywords and answers                       | Prof. Rohit in the Lab                |
+| [`content/battle.ts`](content/battle.ts)           | Your partner's moves, levels and every battle line                 | The battle in the tall grass          |
+| [`content/dialogue.ts`](content/dialogue.ts)       | Other game text: welcome, evolution, the Mart clerk                | Around the game                       |
 
 The shapes are defined in [`content/types.ts`](content/types.ts), so your editor autocompletes
-fields and the build fails if something is missing or misspelled.
+fields and the build fails if something is missing or misspelled. Game text can use `{name}`,
+`{town}`, `{partner}` and `{wild}`; they're filled in from `profile.ts` and `site.ts`.
 
 ### Example: add a project
 

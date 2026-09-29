@@ -530,6 +530,36 @@ export const LOOKS = {
     bottom: "#5a5a6a",
     shoes: "#3a2a2a",
   },
+  youngster: {
+    hairStyle: "cap",
+    outfit: "shirt",
+    hair: "#2b1d14",
+    skin: "#c68c5e",
+    top: "#f2c230",
+    bottom: "#3a5f9a",
+    shoes: "#2a2a34",
+    hat: "#3aa05a",
+  },
+  aide: {
+    hairStyle: "short",
+    outfit: "coat",
+    glasses: true,
+    hair: "#6b4a2a",
+    skin: "#f1c7a0",
+    top: "#f4f6f8",
+    accent: "#6f7fd0",
+    bottom: "#454a5e",
+    shoes: "#3a2a2a",
+  },
+  guide: {
+    hairStyle: "short",
+    outfit: "shirt",
+    hair: "#1e1e24",
+    skin: "#a8744e",
+    top: "#e05a4b",
+    bottom: "#2e3440",
+    shoes: "#f0f0f0",
+  },
 } satisfies Record<string, CharacterLook>;
 
 /** Prof. Rohit, built from the avatar settings in content/site.ts. */

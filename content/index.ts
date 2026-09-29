@@ -4,4 +4,8 @@ export { projects } from "./projects";
 export { skills } from "./skills";
 export { preferences } from "./preferences";
 export { site } from "./site";
+export { town, rooms } from "./world";
+export { professorQa } from "./qa";
+export { dialogue } from "./dialogue";
+export { battle } from "./battle";
 export type * from "./types";
