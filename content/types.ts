@@ -198,6 +198,8 @@ export type ScreenRequest =
   | { screen: "ask" }
   | { screen: "map" }
   | { screen: "options" }
+  | { screen: "help" }
+  | { screen: "credits" }
   | { screen: "resume" };
 
 /** Who an NPC looks like. "professor" is you, drawn from `site.avatar`. */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cryUrl, itemSpriteUrl, pokemonSpriteUrl } from "./sprites";
+import { cryUrl, itemSpriteUrl, partyIconUrl, pokemonSpriteUrl } from "./sprites";
 
 const ROOT = "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites";
 const BW = `${ROOT}/pokemon/versions/generation-v/black-white`;
@@ -35,6 +35,15 @@ describe("itemSpriteUrl", () => {
 
   it("rejects names that are not kebab-case slugs", () => {
     expect(() => itemSpriteUrl("../secret")).toThrow();
+  });
+});
+
+describe("partyIconUrl", () => {
+  it("points at the generation VII menu icon", () => {
+    expect(partyIconUrl(376)).toBe(
+      "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-vii/icons/376.png",
+    );
+    expect(() => partyIconUrl(0)).toThrow();
   });
 });
 

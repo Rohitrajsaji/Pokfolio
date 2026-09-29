@@ -11,6 +11,8 @@ export interface MenuNavigationOptions {
   onSelect?: (item: HTMLElement) => void;
   /** Items per row, for grids: up and down then move a whole row. */
   columns?: number;
+  /** First say on any button; return true to handle it and skip the usual navigation. */
+  onKey?: (action: Action) => boolean | void;
 }
 
 /** Moves the cursor to `item`, scrolling it into view unless `scroll` is false. */
@@ -38,12 +40,14 @@ function select(
  */
 export function useMenuNavigation(
   ref: RefObject<HTMLElement | null>,
-  { onBack, initial = 0, onSelect, columns = 1 }: MenuNavigationOptions,
+  { onBack, initial = 0, onSelect, columns = 1, onKey }: MenuNavigationOptions,
 ): void {
   const start = useRef(initial);
   const latestOnSelect = useRef(onSelect);
+  const latestOnKey = useRef(onKey);
   useEffect(() => {
     latestOnSelect.current = onSelect;
+    latestOnKey.current = onKey;
   });
 
   useEffect(() => {
@@ -74,6 +78,7 @@ export function useMenuNavigation(
   }, [ref]);
 
   useInputLayer((action: Action) => {
+    if (latestOnKey.current?.(action)) return;
     if (action === "b" || action === "escape" || action === "start") return onBack();
     const root = ref.current;
     if (!root) return;

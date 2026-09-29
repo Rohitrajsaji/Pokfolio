@@ -22,7 +22,7 @@ export const MENU_ITEMS: readonly MenuItem[] = [
   { label: "POKéGEAR", note: "Contact", request: { screen: "contact" } },
   { label: "TOWN MAP", note: "Fast travel", request: { screen: "map" } },
   { label: "OPTIONS", note: "Text, time, sound", request: { screen: "options" } },
-  { label: "RÉSUMÉ", note: "Classic view", request: { screen: "resume" } },
+  { label: "RÉSUMÉ", note: "Full résumé", request: { screen: "resume" } },
   { label: "EXIT", note: "Back to the town", request: null },
 ];
 
@@ -50,12 +50,17 @@ export function StartMenu() {
           type="button"
           role="menuitem"
           data-nav
+          aria-describedby={item.note ? `menu-note-${index}` : undefined}
           className="menu-item"
           onClick={() => choose(item, index)}
           onMouseEnter={(event) => event.currentTarget.focus()}
         >
           <span className="menu-label">{item.label}</span>
-          <span className="menu-note">{item.note}</span>
+          {item.note && (
+            <span id={`menu-note-${index}`} hidden>
+              {item.note}
+            </span>
+          )}
         </button>
       ))}
     </div>

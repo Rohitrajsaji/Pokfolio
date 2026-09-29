@@ -2,7 +2,8 @@
 
 A portfolio you can play. Walk around a pixel-art town, step into buildings to read about
 projects and experience, and catch the wild ROHIT in the tall grass to get in touch. Recruiters
-in a hurry can skip straight to the classic résumé at [`/resume`](http://localhost:3000/resume).
+in a hurry can pick RÉSUMÉ on the title screen (or in the START menu) for the whole résumé, in
+the game's own tabbed pages, with a PRINT button for a clean paper copy.
 
 > **Status:** Built and ready to deploy: the title screen and intro, the playable town, menus,
 > every content screen, the professor's Q&A, the catch-to-hire battle, music and sound effects,
@@ -27,7 +28,13 @@ Every building opens part of the portfolio: the Lab holds the projects (Pokédex
 the experience, the house the Trainer Card, the Poké Mart the skills and the Pokémon Center the
 contact details. Step into the tall grass to meet the wild ROHIT, and catch it to get in touch.
 
-Sound starts off. Turn it on with the ♪ SOUND button under the game or in OPTIONS. The music
+The whole site is one full-window pixel-art game: the view adapts to any window shape at a
+crisp whole-number pixel scale, every button, scrollbar and cursor is pixel art, and a
+FULLSCREEN button (or the home-screen app on iPhone) removes the browser chrome. On phones a
+pixel handheld pad appears around the game. HELP and CREDITS live on the title screen and in
+OPTIONS. `src/app/look.test.ts` guards the look (no rounded corners, blur or smooth fonts).
+
+Sound starts off. Turn it on with the SOUND button on the title screen or in OPTIONS. The music
 and sound effects are original, synthesised in the browser as the game runs; the Pokémon cries
 come from PokeAPI.
 

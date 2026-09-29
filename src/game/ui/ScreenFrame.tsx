@@ -1,8 +1,10 @@
 "use client";
 
-import { useId, useRef, type ReactNode } from "react";
+import { useId, useRef, type CSSProperties, type ReactNode } from "react";
 import { sound } from "../audio/sound";
+import type { Action } from "../engine/input";
 import { useGame } from "../state/store";
+import { PixelScroll } from "./PixelScroll";
 import { useMenuNavigation } from "./useMenuNavigation";
 
 /**
@@ -15,6 +17,7 @@ export function ScreenFrame({
   accent = "#d94b4b",
   initial,
   onSelect,
+  onKey,
   children,
 }: {
   title: string;
@@ -23,6 +26,8 @@ export function ScreenFrame({
   initial?: number;
   /** Called whenever the cursor lands on a `[data-nav]` item. */
   onSelect?: (item: HTMLElement) => void;
+  /** First say on any game button; return true to handle it. */
+  onKey?: (action: Action) => boolean | void;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -31,7 +36,7 @@ export function ScreenFrame({
     sound.sfx("back");
     useGame.getState().closeOverlay();
   };
-  useMenuNavigation(ref, { onBack: close, initial, onSelect });
+  useMenuNavigation(ref, { onBack: close, initial, onSelect, onKey });
 
   return (
     <div
@@ -40,16 +45,17 @@ export function ScreenFrame({
       role="dialog"
       aria-modal="true"
       aria-labelledby={titleId}
+      style={{ "--accent": accent } as CSSProperties}
     >
-      <header className="screen-header" style={{ background: accent }}>
+      <header className="screen-header">
         <h2 id={titleId} className="screen-title">
           {title}
         </h2>
         <button type="button" className="screen-close" onClick={close} aria-label="Close">
-          ✕
+          <span className="icon icon-close" aria-hidden />
         </button>
       </header>
-      <div className="screen-body">{children}</div>
+      <PixelScroll className="screen-scroll">{children}</PixelScroll>
     </div>
   );
 }

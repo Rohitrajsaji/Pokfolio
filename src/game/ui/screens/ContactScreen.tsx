@@ -1,7 +1,6 @@
 "use client";
 
 import { profile } from "@content";
-import Link from "next/link";
 import { useState } from "react";
 import { useGame } from "../../state/store";
 import { ScreenFrame } from "../ScreenFrame";
@@ -48,7 +47,7 @@ export function ContactScreen() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              {shortUrl(profile.links.linkedin)} ↗
+              {shortUrl(profile.links.linkedin)}
             </a>
           </li>
           <li className="gear-row">
@@ -60,14 +59,19 @@ export function ContactScreen() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              {shortUrl(profile.links.github)} ↗
+              {shortUrl(profile.links.github)}
             </a>
           </li>
           <li className="gear-row">
             <span className="gear-label">RÉSUMÉ</span>
-            <Link data-nav className="gear-value" href="/resume">
-              Classic one-page view
-            </Link>
+            <button
+              type="button"
+              data-nav
+              className="gear-value"
+              onClick={() => useGame.getState().pushScreen({ screen: "resume" })}
+            >
+              Open the full résumé
+            </button>
           </li>
           <li className="gear-row">
             <span className="gear-label">BASED IN</span>
@@ -92,7 +96,7 @@ export function ContactScreen() {
           className="screen-button"
           onClick={() => useGame.getState().pushScreen({ screen: "jobs" })}
         >
-          ▶ {SCREEN_LINKS.jobs}
+          {SCREEN_LINKS.jobs}
         </button>
       </div>
     </ScreenFrame>

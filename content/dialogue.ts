@@ -27,6 +27,32 @@ export const dialogue = {
       "Your adventure begins now!",
     ],
   },
+  /** The HELP screen: the controls, then a few tips. */
+  help: {
+    controls: [
+      ["MOVE", "Arrow keys or WASD, the D-pad, or tap where you want to go"],
+      ["A", "Z, ENTER or SPACE: talk, read, choose"],
+      ["B", "X or BACKSPACE: go back. Hold it to run"],
+      ["START", "M or ESC: open the menu"],
+      ["RUN", "Hold SHIFT, or hold B, while you walk"],
+    ],
+    tips: [
+      "Talk to people, signs and PCs. Doors open as you walk into them.",
+      "The TOWN MAP in the menu takes you anywhere at once.",
+      "Everything you can find here is also in the RÉSUMÉ.",
+      "Catch the wild {wild} in the tall grass to get in touch.",
+    ],
+  },
+  /** The CREDITS screen. The fan disclaimer from site.ts is shown under these lines. */
+  credits: {
+    lines: [
+      "A fan tribute, made as a personal portfolio by {name}.",
+      "Pokémon sprites, item icons and cries come from PokeAPI.",
+      "The town, the buildings, the people, the music and the sound effects are original.",
+      "Built with Next.js, React and the Web Audio API.",
+    ],
+    link: { label: "POKEAPI", url: "https://pokeapi.co" },
+  },
   /** The POKé MART clerk. {item} is the TM the visitor tried to buy. */
   shop: {
     greeting: "Welcome! These TMs teach all of {name}'s skills. Take a look!",

@@ -4,6 +4,7 @@ import { site, town } from "@content";
 import { useEffect, useRef, useState } from "react";
 import { BUILDINGS } from "@/art/buildings";
 import { paintBuffer } from "@/art/canvas";
+import { shrinkBuffer } from "@/art/scale";
 import { TILE } from "@/art/terrain";
 import { useGame } from "../../state/store";
 import { fill } from "../../text";
@@ -56,7 +57,11 @@ function destinations(): Destination[] {
   return places;
 }
 
-const percent = (tile: number, of: number) => `${((tile + 0.5) / of) * 100}%`;
+/** The map is the town shrunk 4×, then shown at 2 game pixels per map pixel: 8 game pixels a tile. */
+const MAP_SHRINK = 4;
+const TILE_GAME_PX = 8;
+/** The middle of a tile, in game pixels from the map's corner. */
+const at = (tile: number) => `calc(${tile * TILE_GAME_PX + TILE_GAME_PX / 2} * var(--px))`;
 
 export function TownMapScreen() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -68,7 +73,7 @@ export function TownMapScreen() {
   const height = town.ground.length;
 
   useEffect(() => {
-    if (canvasRef.current) paintBuffer(canvasRef.current, townPicture());
+    if (canvasRef.current) paintBuffer(canvasRef.current, shrinkBuffer(townPicture(), MAP_SHRINK));
   }, []);
 
   const go = (place: Destination) => {
@@ -85,8 +90,8 @@ export function TownMapScreen() {
         <div className="town-map-view">
           <canvas
             ref={canvasRef}
-            width={width * TILE}
-            height={height * TILE}
+            width={(width * TILE) / MAP_SHRINK}
+            height={(height * TILE) / MAP_SHRINK}
             className="town-map-canvas"
             role="img"
             aria-label={`Map of ${site.townName}`}
@@ -96,15 +101,12 @@ export function TownMapScreen() {
               key={place.id}
               className="map-marker"
               data-active={active === place.id}
-              style={{ left: percent(place.x, width), top: percent(place.y, height) }}
+              style={{ left: at(place.x), top: at(place.y) }}
               aria-hidden
             />
           ))}
           {here && (
-            <span
-              className="map-you"
-              style={{ left: percent(here.x, width), top: percent(here.y, height) }}
-            >
+            <span className="map-you" style={{ left: at(here.x), top: at(here.y) }}>
               YOU
             </span>
           )}

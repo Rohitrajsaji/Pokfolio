@@ -1,6 +1,7 @@
 "use client";
 
 import { sound } from "../../audio/sound";
+import { toggleFullscreen, useFullscreen } from "../../fullscreen";
 import { useGame } from "../../state/store";
 import { ScreenFrame } from "../ScreenFrame";
 
@@ -43,6 +44,7 @@ const SOUND = ["off", "on"] as const;
 export function OptionsScreen() {
   const settings = useGame((state) => state.settings);
   const update = useGame((state) => state.updateSettings);
+  const screen = useFullscreen();
   return (
     <ScreenFrame title="OPTIONS" accent="#5a6bc4">
       <Choice
@@ -66,6 +68,34 @@ export function OptionsScreen() {
           if (choice === "on" && !settings.sound) sound.sfx("confirm");
         }}
       />
+      {screen.available && (
+        <Choice
+          label="FULLSCREEN"
+          value={screen.on ? "on" : "off"}
+          options={SOUND}
+          onPick={(choice) => {
+            if ((choice === "on") !== screen.on) void toggleFullscreen();
+          }}
+        />
+      )}
+      <div className="screen-actions">
+        <button
+          type="button"
+          data-nav
+          className="screen-button"
+          onClick={() => useGame.getState().pushScreen({ screen: "help" })}
+        >
+          HELP
+        </button>
+        <button
+          type="button"
+          data-nav
+          className="screen-button"
+          onClick={() => useGame.getState().pushScreen({ screen: "credits" })}
+        >
+          CREDITS
+        </button>
+      </div>
       <p className="screen-hint">
         AUTO follows your clock. SOUND brings music, sound effects and POKéMON cries; it starts off.
         Settings are remembered in this browser.

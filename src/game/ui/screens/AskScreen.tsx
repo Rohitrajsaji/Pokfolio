@@ -60,7 +60,7 @@ export function AskScreen() {
               className="screen-button"
               onClick={() => useGame.getState().pushScreen(then)}
             >
-              ▶ {SCREEN_LINKS[then.screen]}
+              {SCREEN_LINKS[then.screen]}
             </button>
           </div>
         )}

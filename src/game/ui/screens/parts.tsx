@@ -21,7 +21,9 @@ export const SCREEN_LINKS: Readonly<Record<ScreenRequest["screen"], string>> = {
   ask: "ASK THE PROFESSOR",
   map: "OPEN THE TOWN MAP",
   options: "OPEN THE OPTIONS",
-  resume: "READ THE CLASSIC RÉSUMÉ",
+  help: "OPEN THE HELP",
+  credits: "OPEN THE CREDITS",
+  resume: "READ THE RÉSUMÉ",
 };
 
 export function TypeBadges({ types }: { types?: readonly PokeType[] }) {

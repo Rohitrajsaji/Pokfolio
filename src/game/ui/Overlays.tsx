@@ -12,7 +12,7 @@ function HintBanner() {
   if (!hint || overlay) return null;
   return (
     <p className="hint-banner ds-box" aria-live="polite">
-      <span aria-hidden>▲ </span>
+      <span className="hint-arrow" aria-hidden />
       {hint}
     </p>
   );

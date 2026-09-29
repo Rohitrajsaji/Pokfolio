@@ -35,6 +35,12 @@ export function pokemonSpriteUrl(
   return `${segments.join("/")}/${id}.${animated ? "gif" : "png"}`;
 }
 
+/** The 40×30 menu icon Pokémon games show in a party list (generation VII). */
+export function partyIconUrl(id: number): string {
+  assertId(id);
+  return `${site.sprites.baseUrl}/pokemon/versions/generation-vii/icons/${id}.png`;
+}
+
 /** Bag icon for an item slug as PokeAPI names it, e.g. "poke-ball" or "tm-fire". */
 export function itemSpriteUrl(slug: string): string {
   if (!SLUG.test(slug)) throw new Error(`Invalid item slug: ${slug}`);

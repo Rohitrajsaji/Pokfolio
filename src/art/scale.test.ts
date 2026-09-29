@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PixelBuffer } from "./pixel-buffer";
-import { cropBuffer, scaleBuffer } from "./scale";
+import { cropBuffer, scaleBuffer, shrinkBuffer } from "./scale";
 
 /** Red, blue / green, and one transparent pixel. */
 function tiles(): PixelBuffer {
@@ -36,6 +36,18 @@ describe("scaleBuffer", () => {
   it("only takes whole numbers of at least 1", () => {
     expect(() => scaleBuffer(tiles(), 1.5)).toThrow(/whole number/);
     expect(() => scaleBuffer(tiles(), 0)).toThrow(/whole number/);
+  });
+});
+
+describe("shrinkBuffer", () => {
+  it("undoes scaleBuffer", () => {
+    const back = shrinkBuffer(scaleBuffer(tiles(), 4), 4);
+    expect(Array.from(back.data)).toEqual(Array.from(tiles().data));
+  });
+
+  it("drops a partial block at the edge, and only takes whole numbers", () => {
+    expect(shrinkBuffer(scaleBuffer(tiles(), 3), 2)).toMatchObject({ width: 3, height: 3 });
+    expect(() => shrinkBuffer(tiles(), 0.5)).toThrow(/whole number/);
   });
 });
 

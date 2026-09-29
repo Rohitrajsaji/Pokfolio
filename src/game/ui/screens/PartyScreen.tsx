@@ -4,6 +4,8 @@ import { experience } from "@content";
 import type { Job } from "@content/types";
 import { useId, useState } from "react";
 import { formatRange } from "@/lib/dates";
+import { partyIconUrl } from "@/pokeapi/sprites";
+import { Sprite } from "@/ui/Sprite";
 import { sound } from "../../audio/sound";
 import { useGame } from "../../state/store";
 import { ScreenFrame } from "../ScreenFrame";
@@ -88,7 +90,12 @@ export function PartyScreen({ job }: { job?: string }) {
                   aria-current={i === index}
                   onClick={() => setIndex(i)}
                 >
-                  <MonSprite mon={entry.mascot} decorative className="party-icon" />
+                  <Sprite
+                    src={partyIconUrl(entry.mascot.dex)}
+                    alt=""
+                    size={40}
+                    className="party-icon"
+                  />
                   <span>
                     <span className="browse-name">{entry.company.toUpperCase()}</span>
                     <span className="browse-no">{formatRange(entry.start, entry.end)}</span>
@@ -103,7 +110,7 @@ export function PartyScreen({ job }: { job?: string }) {
             className="screen-button browse-extra"
             onClick={() => useGame.getState().pushScreen({ screen: "evolution" })}
           >
-            ▶ {SCREEN_LINKS.evolution}
+            {SCREEN_LINKS.evolution}
           </button>
         </div>
         <JobEntry key={current.id} job={current} />

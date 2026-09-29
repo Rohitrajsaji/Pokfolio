@@ -1,28 +1,20 @@
 "use client";
 
 import type { ScreenRequest } from "@content/types";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { useGame } from "../state/store";
 import { AskScreen } from "./screens/AskScreen";
 import { BagScreen } from "./screens/BagScreen";
 import { ContactScreen } from "./screens/ContactScreen";
 import { DexScreen } from "./screens/DexScreen";
+import { CreditsScreen } from "./screens/CreditsScreen";
 import { EvolutionScreen } from "./screens/EvolutionScreen";
+import { HelpScreen } from "./screens/HelpScreen";
 import { JobsScreen } from "./screens/JobsScreen";
 import { OptionsScreen } from "./screens/OptionsScreen";
 import { PartyScreen } from "./screens/PartyScreen";
+import { ResumeScreen } from "./screens/ResumeScreen";
 import { TownMapScreen } from "./screens/TownMapScreen";
 import { TrainerCardScreen } from "./screens/TrainerCardScreen";
-
-function ResumeRedirect() {
-  const router = useRouter();
-  useEffect(() => {
-    useGame.getState().closeAll();
-    router.push("/resume");
-  }, [router]);
-  return null;
-}
 
 function Screen({ request }: { request: ScreenRequest }) {
   switch (request.screen) {
@@ -47,7 +39,11 @@ function Screen({ request }: { request: ScreenRequest }) {
     case "options":
       return <OptionsScreen />;
     case "resume":
-      return <ResumeRedirect />;
+      return <ResumeScreen />;
+    case "help":
+      return <HelpScreen />;
+    case "credits":
+      return <CreditsScreen />;
   }
 }
 

@@ -58,7 +58,7 @@ function DexEntry({ project, index }: { project: Project; index: number }) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              GITHUB ↗
+              GITHUB
             </a>
           )}
           {links.demo && (
@@ -69,7 +69,7 @@ function DexEntry({ project, index }: { project: Project; index: number }) {
               target="_blank"
               rel="noopener noreferrer"
             >
-              LIVE DEMO ↗
+              LIVE DEMO
             </a>
           )}
         </div>
@@ -113,7 +113,7 @@ export function DexScreen({ project }: { project?: string }) {
                   onClick={() => setIndex(i)}
                 >
                   <span>
-                    <span className="browse-no">{dexNumber(i)}</span>
+                    <span className="browse-no">{String(i + 1).padStart(3, "0")}</span>
                     <span className="browse-name">{entry.name.toUpperCase()}</span>
                   </span>
                 </button>

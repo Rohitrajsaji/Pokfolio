@@ -95,7 +95,7 @@ export function EvolutionScreen() {
         <MessageBox lines={lines}>
           <div className="screen-actions">
             <button type="button" data-nav className="screen-button" onClick={advance}>
-              {evolving ? "▶ SKIP" : next ? "▶ NEXT" : "▶ DONE"}
+              {evolving ? "SKIP" : next ? "NEXT" : "DONE"}
             </button>
           </div>
         </MessageBox>

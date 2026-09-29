@@ -27,6 +27,7 @@ import {
 } from "../world/runtime";
 import type { Action, InputHub } from "./input";
 import { findPath, findPathNextTo, type PathGrid } from "./path";
+import { drawWipe } from "./wipe";
 import { LIGHTING, type TimeOfDay } from "./time";
 import {
   RUN_FRAMES,
@@ -123,6 +124,9 @@ export class Engine {
   private grassSteps = 0;
   private edgeShown = false;
   private camera = { x: 0, y: 0 };
+  /** How much of the world is in view, in game pixels. Set by `resize`. */
+  private viewW = VIEW_WIDTH;
+  private viewH = VIEW_HEIGHT;
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -156,6 +160,17 @@ export class Engine {
   }
 
   // ---------------------------------------------------------------- lifecycle
+
+  /** Shows `width`×`height` game pixels of the world: the canvas is exactly that size. */
+  resize(width: number, height: number): void {
+    if (width === this.viewW && height === this.viewH) return;
+    this.viewW = width;
+    this.viewH = height;
+    this.canvas.width = width;
+    this.canvas.height = height;
+    // Resizing a canvas resets its drawing state.
+    this.ctx.imageSmoothingEnabled = false;
+  }
 
   start(): void {
     if (this.running) return;
@@ -416,8 +431,8 @@ export class Engine {
   tap(clientX: number, clientY: number): void {
     if (this.fade || useGame.getState().overlay || this.hooks.busy()) return;
     const rect = this.canvas.getBoundingClientRect();
-    const gx = ((clientX - rect.left) / rect.width) * VIEW_WIDTH + this.camera.x;
-    const gy = ((clientY - rect.top) / rect.height) * VIEW_HEIGHT + this.camera.y;
+    const gx = ((clientX - rect.left) / rect.width) * this.viewW + this.camera.x;
+    const gy = ((clientY - rect.top) / rect.height) * this.viewH + this.camera.y;
     const tx = Math.floor(gx / TILE);
     const ty = Math.floor(gy / TILE);
     if (!inBounds(this.map, tx, ty)) return;
@@ -508,17 +523,17 @@ export class Engine {
     const mapWidth = map.width * TILE;
     const mapHeight = map.height * TILE;
     const camX =
-      mapWidth <= VIEW_WIDTH
-        ? -Math.floor((VIEW_WIDTH - mapWidth) / 2)
-        : clamp(px + 8 - VIEW_WIDTH / 2, 0, mapWidth - VIEW_WIDTH);
+      mapWidth <= this.viewW
+        ? -Math.floor((this.viewW - mapWidth) / 2)
+        : clamp(px + 8 - this.viewW / 2, 0, mapWidth - this.viewW);
     const camY =
-      mapHeight <= VIEW_HEIGHT
-        ? -Math.floor((VIEW_HEIGHT - mapHeight) / 2)
-        : clamp(py + 8 - VIEW_HEIGHT / 2, 0, mapHeight - VIEW_HEIGHT);
+      mapHeight <= this.viewH
+        ? -Math.floor((this.viewH - mapHeight) / 2)
+        : clamp(py + 8 - this.viewH / 2, 0, mapHeight - this.viewH);
     this.camera = { x: camX, y: camY };
 
     ctx.fillStyle = "#0c0d14";
-    ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+    ctx.fillRect(0, 0, this.viewW, this.viewH);
     ctx.drawImage(this.layer(map, light.lit), -camX, -camY);
 
     const sway = Math.floor(this.frame / 32) % 2;
@@ -538,7 +553,7 @@ export class Engine {
     if (light.tint) {
       ctx.globalCompositeOperation = "multiply";
       ctx.fillStyle = light.tint;
-      ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+      ctx.fillRect(0, 0, this.viewW, this.viewH);
       ctx.globalCompositeOperation = "source-over";
       const glow = this.layers.get(`${map.id}:glow`);
       if (light.lit && glow) ctx.drawImage(glow, -camX, -camY);
@@ -546,8 +561,7 @@ export class Engine {
 
     if (this.fade) {
       const t = this.fade.t / FADE_FRAMES;
-      ctx.fillStyle = `rgba(0, 0, 0, ${this.fade.phase === "out" ? t : 1 - t})`;
-      ctx.fillRect(0, 0, VIEW_WIDTH, VIEW_HEIGHT);
+      drawWipe(ctx, this.viewW, this.viewH, this.fade.phase === "out" ? t : 1 - t);
     }
   }
 

@@ -65,7 +65,7 @@ describe("the title screen", () => {
     render(<TitleScreen />);
     expect(screen.getByText(site.gameTitle)).toBeTruthy();
     expect(screen.getByText(site.gameSubtitle)).toBeTruthy();
-    const start = screen.getByRole("button", { name: "PRESS START" });
+    const start = screen.getByRole("menuitem", { name: "PRESS START" });
     expect(document.activeElement).toBe(start);
   });
 
@@ -75,9 +75,21 @@ describe("the title screen", () => {
     expect(stage()).toBe("intro");
   });
 
+  it("has a RÉSUMÉ choice that opens the résumé and leaves the title behind it", () => {
+    render(<TitleScreen />);
+    press("down");
+    expect(document.querySelector("[data-current]")?.textContent).toBe("RÉSUMÉ");
+    press("a");
+    expect(useGame.getState().overlay).toMatchObject({
+      kind: "screen",
+      request: { screen: "resume" },
+    });
+    expect(stage()).toBe("title");
+  });
+
   it("starts the intro on a click or tap", () => {
     render(<TitleScreen />);
-    fireEvent.click(screen.getByRole("button", { name: "PRESS START" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "PRESS START" }));
     expect(stage()).toBe("intro");
   });
 

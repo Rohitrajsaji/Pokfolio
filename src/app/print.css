@@ -1,0 +1,128 @@
+/*
+ * The résumé text that sits on the page. On screen it is hidden from the eye
+ * (search engines and screen readers still read it). When printed it is the
+ * whole page and the game is hidden, so the game's PRINT button prints it.
+ */
+
+.resume-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  html,
+  body {
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+
+  .game {
+    display: none !important;
+  }
+
+  .resume-text {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip-path: none;
+    color: #000000;
+    font:
+      10pt/1.45 system-ui,
+      -apple-system,
+      "Segoe UI",
+      Helvetica,
+      Arial,
+      sans-serif;
+    white-space: normal;
+  }
+
+  .resume-text h2,
+  .resume-text h3 {
+    break-after: avoid;
+  }
+
+  .resume-text h2 {
+    margin: 0;
+    font-size: 22pt;
+    line-height: 1.15;
+  }
+
+  .resume-text h3 {
+    margin: 14pt 0 6pt;
+    padding-bottom: 2pt;
+    border-bottom: 1px solid #999999;
+    font-size: 9pt;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+  }
+
+  .resume-text h4 {
+    margin: 8pt 0 0;
+    font-size: 10.5pt;
+  }
+
+  .resume-text p {
+    margin: 2pt 0;
+  }
+
+  .resume-text ul {
+    margin: 3pt 0 0;
+    padding-left: 14pt;
+    list-style: disc;
+  }
+
+  .resume-text li {
+    margin: 1pt 0;
+  }
+
+  .resume-text dl {
+    display: grid;
+    grid-template-columns: 11rem 1fr;
+    gap: 3pt 10pt;
+  }
+
+  .resume-text dd {
+    margin: 0;
+  }
+
+  .resume-text a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .resume-text .resume-contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 14pt;
+    padding: 0;
+    list-style: none;
+  }
+
+  .resume-text .resume-meta {
+    color: #444444;
+  }
+
+  .resume-text .resume-footer {
+    margin-top: 16pt;
+  }
+
+  .resume-text article {
+    break-inside: avoid;
+  }
+}

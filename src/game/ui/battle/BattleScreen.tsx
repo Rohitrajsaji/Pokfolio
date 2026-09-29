@@ -30,11 +30,9 @@ import { useMenuNavigation } from "../useMenuNavigation";
 import { useReducedMotion } from "../useReducedMotion";
 import { useTypewriter } from "../useTypewriter";
 
-/** One pixel of the 256-pixel-wide game screen, in container units (cqw). */
-const GAME_PX = 100 / 256;
 /** Sprite pixels per game pixel: the wild Pokémon, and your partner's closer back view. */
 const WILD_SCALE = 1;
-const PARTNER_SCALE = 1.6;
+const PARTNER_SCALE = 2;
 /** Keep these in step with the battle animations in globals.css. */
 const INTRO_MS = 1300;
 const THROW_MS = 1300;
@@ -99,8 +97,8 @@ function BattleSprite({
   const [size, setSize] = useState(() => naturalSizes.get(src) ?? null);
   const style: CSSProperties = size
     ? {
-        width: `${size.width * scale * GAME_PX}cqw`,
-        height: `${size.height * scale * GAME_PX}cqw`,
+        width: `calc(${size.width * scale} * var(--px))`,
+        height: `calc(${size.height * scale} * var(--px))`,
       }
     : // Hidden at its natural size until loaded, so it never shows stretched.
       { visibility: "hidden", width: "auto", height: "auto" };
@@ -123,13 +121,22 @@ function BattleSprite({
   );
 }
 
+/** The HP bar is this many game pixels long, so it always fills in whole pixels. */
+const HP_SEGMENTS = 48;
+
 function HpBar({ hp }: { hp: number }) {
   const level = hp > 0.5 ? "high" : hp > 0.2 ? "mid" : "low";
   return (
     <span className="hp-row">
       <span className="hp-label">HP</span>
       <span className="hp-track">
-        <span className="hp-fill" data-level={level} style={{ width: `${hp * 100}%` }} />
+        <span
+          className="hp-fill"
+          data-level={level}
+          style={{
+            width: `calc(${hp > 0 ? Math.max(1, Math.round(hp * HP_SEGMENTS)) : 0} * var(--px))`,
+          }}
+        />
       </span>
     </span>
   );
@@ -260,11 +267,7 @@ function BattleText({
       <p className="sr-only" aria-live="polite">
         {beat.text}
       </p>
-      {typed && !waiting && (
-        <span className="dialog-next" aria-hidden>
-          ▼
-        </span>
-      )}
+      {typed && !waiting && <span className="dialog-next" aria-hidden />}
     </div>
   );
 }

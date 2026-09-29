@@ -153,6 +153,14 @@ class Sound implements MusicPlayer {
     return this.mixer;
   }
 
+  /** Pauses everything while the browser shows something over the game (the print dialog). */
+  hold(on: boolean): void {
+    const ctx = this.mixer?.ctx;
+    if (!ctx) return;
+    if (on) void ctx.suspend();
+    else if (this.enabled && !document.hidden) void ctx.resume();
+  }
+
   /** Nothing plays in a hidden tab. */
   private onVisibility = () => {
     const ctx = this.mixer?.ctx;

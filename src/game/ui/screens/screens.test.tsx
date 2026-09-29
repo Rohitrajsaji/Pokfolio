@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { dialogue, experience, professorQa, profile, projects, skills } from "@content";
+import { dialogue, experience, professorQa, profile, projects, site, skills } from "@content";
 import type { ScreenRequest } from "@content/types";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -75,6 +75,9 @@ describe("every screen", () => {
     [{ screen: "ask" }, "ASK THE PROFESSOR"],
     [{ screen: "map" }, "TOWN MAP"],
     [{ screen: "options" }, "OPTIONS"],
+    [{ screen: "resume" }, "RÉSUMÉ"],
+    [{ screen: "help" }, "HELP"],
+    [{ screen: "credits" }, "CREDITS"],
   ] satisfies Array<[ScreenRequest, string]>)(
     "%o opens as %s, cursor ready, and B closes it",
     (request, title) => {
@@ -118,7 +121,7 @@ describe("BAG and POKé MART", () => {
     fireEvent.click(screen.getByRole("button", { name: (name) => name.includes(skill) }));
     const refusal = fillWith(dialogue.shop.refusal[0], { item: `TM01 ${skill.toUpperCase()}` });
     expect(screen.getByText(refusal)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: `▶ ${SCREEN_LINKS.jobs}` }));
+    fireEvent.click(screen.getByRole("button", { name: `${SCREEN_LINKS.jobs}` }));
     expect(useGame.getState().overlay).toMatchObject({ request: { screen: "jobs" } });
   });
 });
@@ -162,7 +165,7 @@ describe("ASK THE PROFESSOR", () => {
     open({ screen: "ask" });
     fireEvent.click(screen.getByRole("button", { name: topic.label }));
     expect(screen.getByText(fill(topic.answer[0]))).toBeTruthy();
-    const follow = screen.getByRole("button", { name: `▶ ${SCREEN_LINKS[topic.then.screen]}` });
+    const follow = screen.getByRole("button", { name: `${SCREEN_LINKS[topic.then.screen]}` });
     expect(document.activeElement).toBe(follow);
     fireEvent.click(follow);
     expect(useGame.getState().overlay).toMatchObject({
@@ -187,7 +190,9 @@ describe("ASK THE PROFESSOR", () => {
 
     ask("What's your favourite colour?");
     expect(screen.getByText(fill(professorQa.fallback[0]))).toBeTruthy();
-    expect(screen.queryByRole("button", { name: (name) => name.startsWith("▶") })).toBeNull();
+    for (const label of Object.values(SCREEN_LINKS)) {
+      expect(screen.queryByRole("button", { name: label }), label).toBeNull();
+    }
   });
 
   it("lets the D-pad cursor leave the text field", () => {
@@ -227,5 +232,108 @@ describe("POKéGEAR", () => {
     open({ screen: "contact" });
     fireEvent.click(screen.getByRole("button", { name: "COPY" }));
     expect(await screen.findByText(/Couldn't copy automatically/)).toBeTruthy();
+  });
+});
+
+describe("RÉSUMÉ", () => {
+  const selectedTab = () => screen.getByRole("tab", { selected: true }).textContent;
+  const panelText = () => screen.getByRole("tabpanel").textContent ?? "";
+
+  it("opens on SUMMARY, with the name, the summary and the contact links", () => {
+    open({ screen: "resume" });
+    expect(selectedTab()).toBe("SUMMARY");
+    expect(panelText()).toContain(profile.name.toUpperCase());
+    expect(panelText()).toContain(profile.summary[0]);
+    expect(screen.getByRole("link", { name: profile.email }).getAttribute("href")).toBe(
+      `mailto:${profile.email}`,
+    );
+  });
+
+  it("moves along the tabs with left and right, all the way round to PRINT and back", () => {
+    open({ screen: "resume" });
+    const seen = [selectedTab()];
+    for (let i = 0; i < 4; i++) {
+      press("right");
+      seen.push(selectedTab());
+    }
+    expect(seen).toEqual(["SUMMARY", "EXPERIENCE", "PROJECTS", "SKILLS", "EDUCATION"]);
+    press("right");
+    expect(document.querySelector("[data-current]")?.textContent).toBe("PRINT");
+    press("right");
+    expect(selectedTab()).toBe("SUMMARY");
+    press("left");
+    expect(document.querySelector("[data-current]")?.textContent).toBe("PRINT");
+  });
+
+  it("holds everything the content files say, across its tabs", () => {
+    open({ screen: "resume" });
+    const all: string[] = [];
+    for (let i = 0; i < 5; i++) {
+      all.push(panelText());
+      press("right");
+    }
+    const text = all.join("\n");
+    for (const job of experience) {
+      expect(text, job.id).toContain(job.company);
+      for (const highlight of job.highlights) expect(text).toContain(highlight);
+    }
+    for (const project of projects) {
+      expect(text, project.id).toContain(project.name);
+      expect(text).toContain(project.summary);
+    }
+    for (const category of skills) {
+      expect(text).toContain(category.name);
+      for (const skill of category.skills) expect(text).toContain(skill);
+    }
+    for (const ed of profile.education) expect(text).toContain(ed.institution);
+  });
+
+  it("scrolls with up and down, without moving the tab", () => {
+    open({ screen: "resume" });
+    const body = document.querySelector<HTMLElement>(".px-scroll-body");
+    if (!body) throw new Error("expected a scrolling body");
+    const scrollBy = vi.fn();
+    body.scrollBy = scrollBy as unknown as typeof body.scrollBy;
+    press("down");
+    press("up");
+    expect(scrollBy).toHaveBeenCalledTimes(2);
+    expect(scrollBy.mock.calls[0][0].top).toBeGreaterThan(0);
+    expect(scrollBy.mock.calls[1][0].top).toBeLessThan(0);
+    expect(selectedTab()).toBe("SUMMARY");
+  });
+
+  it("prints with the PRINT button", () => {
+    const print = vi.spyOn(window, "print").mockImplementation(() => {});
+    open({ screen: "resume" });
+    fireEvent.click(screen.getByRole("button", { name: "PRINT" }));
+    expect(print).toHaveBeenCalledOnce();
+    print.mockRestore();
+  });
+});
+
+describe("HELP and CREDITS", () => {
+  it("HELP lists every control and tip from the content files", () => {
+    open({ screen: "help" });
+    const text = document.querySelector(".px-scroll-content")?.textContent ?? "";
+    for (const [button, does] of dialogue.help.controls) {
+      expect(text).toContain(button);
+      expect(text).toContain(does);
+    }
+    for (const tip of dialogue.help.tips) expect(text).toContain(fill(tip));
+  });
+
+  it("CREDITS thanks PokeAPI and carries the fan disclaimer", () => {
+    open({ screen: "credits" });
+    const text = document.querySelector(".px-scroll-content")?.textContent ?? "";
+    expect(text).toContain(site.disclaimer);
+    const link = screen.getByRole("link", { name: dialogue.credits.link.label });
+    expect(link.getAttribute("href")).toBe(dialogue.credits.link.url);
+    expect(link.getAttribute("rel")).toContain("noopener");
+  });
+
+  it("OPTIONS leads to both", () => {
+    open({ screen: "options" });
+    fireEvent.click(screen.getByRole("button", { name: "HELP" }));
+    expect(useGame.getState().overlay).toMatchObject({ request: { screen: "help" } });
   });
 });

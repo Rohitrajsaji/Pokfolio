@@ -109,10 +109,10 @@ export function BagScreen({ shop = false }: { shop?: boolean }) {
                 className="screen-button"
                 onClick={() => open("contact")}
               >
-                ▶ {SCREEN_LINKS.contact}
+                {SCREEN_LINKS.contact}
               </button>
               <button type="button" data-nav className="screen-button" onClick={() => open("jobs")}>
-                ▶ {SCREEN_LINKS.jobs}
+                {SCREEN_LINKS.jobs}
               </button>
             </div>
           )}

@@ -23,6 +23,22 @@ export function scaleBuffer(src: PixelBuffer, factor: number): PixelBuffer {
   return out;
 }
 
+/** Shrinks `src` by a whole number `factor`, keeping the pixel at the middle of each block. */
+export function shrinkBuffer(src: PixelBuffer, factor: number): PixelBuffer {
+  if (!Number.isInteger(factor) || factor < 1) {
+    throw new Error(`Scale must be a whole number, got ${factor}`);
+  }
+  const out = new PixelBuffer(Math.floor(src.width / factor), Math.floor(src.height / factor));
+  const mid = Math.floor(factor / 2);
+  for (let y = 0; y < out.height; y++) {
+    for (let x = 0; x < out.width; x++) {
+      const from = ((y * factor + mid) * src.width + x * factor + mid) * 4;
+      out.data.set(src.data.subarray(from, from + 4), (y * out.width + x) * 4);
+    }
+  }
+  return out;
+}
+
 /** The `width`×`height` window of `src` whose top-left corner is (x, y). */
 export function cropBuffer(
   src: PixelBuffer,

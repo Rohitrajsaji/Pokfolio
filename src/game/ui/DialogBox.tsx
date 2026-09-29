@@ -59,11 +59,7 @@ export function DialogBox({ dialog }: { dialog: DialogRequest }) {
         {dialog.speaker ? `${dialog.speaker}: ` : ""}
         {text}
       </p>
-      {typed && !asking && (
-        <span className="dialog-next" aria-hidden>
-          ▼
-        </span>
-      )}
+      {typed && !asking && <span className="dialog-next" aria-hidden />}
       {asking && typed && (
         <div className="choice-box ds-box" role="group" aria-label={text}>
           {(["YES", "NO"] as const).map((label, i) => (
@@ -79,9 +75,7 @@ export function DialogBox({ dialog }: { dialog: DialogRequest }) {
                 close(i === 0);
               }}
             >
-              <span className="choice-cursor" aria-hidden>
-                {choice === i ? "▶" : ""}
-              </span>
+              <span className="choice-cursor" data-on={choice === i ? "" : undefined} aria-hidden />
               {label}
             </button>
           ))}

@@ -134,7 +134,7 @@ export const town: TownSpec = {
       talk: {
         lines: [
           "Tip: press START to open the menu. On a keyboard, that's M or ESC.",
-          "In a hurry? The classic résumé is in there too!",
+          "In a hurry? The résumé is in there too!",
         ],
       },
     },
@@ -142,7 +142,7 @@ export const town: TownSpec = {
   start: { x: 9, y: 15, facing: "up" },
   edge: [
     "The road leads back to the real world.",
-    "Explore {town} first! The classic résumé is in the START menu.",
+    "Explore {town} first! The résumé is in the START menu.",
   ],
 };
 
@@ -178,7 +178,7 @@ export const rooms: Record<RoomId, RoomSpec> = {
         y: 2,
         read: {
           lines: ["It's {name}'s PC. A résumé is open on the screen."],
-          confirm: { question: "Read the classic résumé?", no: ["You logged off."] },
+          confirm: { question: "Read the résumé?", no: ["You logged off."] },
           then: { screen: "resume" },
         },
       },
@@ -285,7 +285,7 @@ export const rooms: Record<RoomId, RoomSpec> = {
         y: 2,
         read: {
           lines: ["It's the CENTER's PC. {name}'s résumé is saved here."],
-          confirm: { question: "Open the classic résumé?", no: ["You logged off."] },
+          confirm: { question: "Open the résumé?", no: ["You logged off."] },
           then: { screen: "resume" },
         },
       },

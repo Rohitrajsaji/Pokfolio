@@ -1,7 +1,6 @@
 "use client";
 
 import { experience, profile } from "@content";
-import Link from "next/link";
 import { formatRange, formatYearMonth } from "@/lib/dates";
 import { useGame } from "../../state/store";
 import { ScreenFrame } from "../ScreenFrame";
@@ -72,11 +71,16 @@ export function TrainerCardScreen() {
           className="screen-button"
           onClick={() => useGame.getState().pushScreen({ screen: "contact" })}
         >
-          ▶ {SCREEN_LINKS.contact}
+          {SCREEN_LINKS.contact}
         </button>
-        <Link data-nav href="/resume" className="screen-button">
-          ▶ {SCREEN_LINKS.resume}
-        </Link>
+        <button
+          type="button"
+          data-nav
+          className="screen-button"
+          onClick={() => useGame.getState().pushScreen({ screen: "resume" })}
+        >
+          {SCREEN_LINKS.resume}
+        </button>
       </div>
     </ScreenFrame>
   );

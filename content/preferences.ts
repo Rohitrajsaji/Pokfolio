@@ -1,6 +1,6 @@
 import type { CareerPreferences } from "./types";
 
-/** Shown on the town's job board and in the classic résumé. */
+/** Shown on the town's job board and in the résumé. */
 export const preferences: CareerPreferences = {
   intro: "Open to software engineering and AI engineering opportunities, including:",
   roles: [

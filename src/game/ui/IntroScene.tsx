@@ -41,7 +41,7 @@ export function IntroScene() {
       <TownBackdrop />
       <div className="stage-shade" aria-hidden />
       <button type="button" className="intro-skip" onClick={skip}>
-        SKIP ▶
+        SKIP
       </button>
       <AvatarPortrait className="intro-portrait" />
       <div className="dialog ds-box" onClick={advance} role="group" aria-label="Introduction">
@@ -53,11 +53,7 @@ export function IntroScene() {
         <p className="sr-only" aria-live="polite">
           {SPEAKER}: {text}
         </p>
-        {typed && (
-          <span className="dialog-next" aria-hidden>
-            ▼
-          </span>
-        )}
+        {typed && <span className="dialog-next" aria-hidden />}
       </div>
     </div>
   );

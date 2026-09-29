@@ -1,7 +1,6 @@
 "use client";
 
 import { preferences, profile } from "@content";
-import Link from "next/link";
 import type { CSSProperties } from "react";
 import { useGame } from "../../state/store";
 import { ScreenFrame } from "../ScreenFrame";
@@ -38,11 +37,16 @@ export function JobsScreen() {
           className="screen-button"
           onClick={() => useGame.getState().pushScreen({ screen: "contact" })}
         >
-          ▶ {SCREEN_LINKS.contact}
+          {SCREEN_LINKS.contact}
         </button>
-        <Link data-nav href="/resume" className="screen-button">
-          ▶ {SCREEN_LINKS.resume}
-        </Link>
+        <button
+          type="button"
+          data-nav
+          className="screen-button"
+          onClick={() => useGame.getState().pushScreen({ screen: "resume" })}
+        >
+          {SCREEN_LINKS.resume}
+        </button>
       </div>
     </ScreenFrame>
   );
