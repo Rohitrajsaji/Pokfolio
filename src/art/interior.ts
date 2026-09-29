@@ -3,7 +3,8 @@ import { mix, shade } from "./color";
 import { paintGrid, rle, type Grid } from "./grid";
 import { hash2 } from "./noise";
 import { GLASS, GOLD, LEAF, OUTLINE, POKEBALL, STONE, WHITE, WOOD } from "./palette";
-import type { PixelBuffer } from "./pixel-buffer";
+import { PixelBuffer } from "./pixel-buffer";
+import { paintVoltorb } from "./voltorb";
 
 export const INTERIOR = {
   wood: { light: "#e6c08c", base: "#d6a76c", dark: "#b8864e", line: "#9c6c3a" },
@@ -211,8 +212,30 @@ export function paintHealMachine(buf: PixelBuffer, x: number, y: number) {
   }
 }
 
-/** Framed poster; the colours hint at what's on it. */
-export function paintPoster(buf: PixelBuffer, x: number, y: number, colours: [string, string]) {
+/**
+ * Framed poster; the colours hint at what's on it. A crooked one hangs a little lower on its right:
+ * a step down every four columns, the way a poster looks when it's swung on a hidden switch.
+ */
+export function paintPoster(
+  buf: PixelBuffer,
+  x: number,
+  y: number,
+  colours: [string, string],
+  crooked = false,
+) {
+  if (!crooked) return paintStraightPoster(buf, x, y, colours);
+  const flat = new PixelBuffer(12, 10);
+  paintStraightPoster(flat, 0, 0, colours);
+  for (let cx = 0; cx < 12; cx++) {
+    const drop = Math.floor(cx / 4);
+    for (let cy = 0; cy < 10; cy++) {
+      const colour = flat.get(cx, cy);
+      if (colour) buf.set(x + cx, y + cy + drop, colour);
+    }
+  }
+}
+
+function paintStraightPoster(buf: PixelBuffer, x: number, y: number, colours: [string, string]) {
   buf.rect(x, y, 12, 10, OUTLINE);
   buf.rect(x + 1, y + 1, 10, 8, WHITE);
   buf.rect(x + 2, y + 2, 8, 3, colours[0]);
@@ -332,4 +355,113 @@ export function paintStatue(buf: PixelBuffer, x: number, y: number) {
   buf.hline(x + 2, y + 8, 12, OUTLINE);
   buf.fillEllipse(x + 8, y + 8.5, 2, 2, OUTLINE);
   buf.set(x + 8, y + 8, STONE.light);
+}
+
+// ---------------------------------------------------------------- the hidden arcade
+
+export const ARCADE = {
+  wall: { base: "#2b2547", stripe: "#362e5c", trim: "#7657c4", shadow: "#1c1832" },
+  carpet: { base: "#3b2f6e", dot: "#54459a", line: "#2a2150" },
+  cabinet: { body: "#2c3c92", dark: "#1a2664", light: "#4f66d8", screen: "#10142e" },
+  slots: { body: "#b8323c", dark: "#7c1f28", light: "#e5646c" },
+  /** Steps down into the dark: the far ones darkest. */
+  stairs: ["#1a1529", "#241d3b", "#31284f", "#43376a", "#5a4b8a"],
+};
+
+/** Dark carpet with a small diamond in every square. */
+export function paintCarpetFloor(buf: PixelBuffer, x: number, y: number, w: number, h: number) {
+  const c = ARCADE.carpet;
+  buf.rect(x, y, w, h, c.base);
+  for (let ty = 0; ty < h; ty += 8) {
+    for (let tx = 0; tx < w; tx += 8) {
+      buf.rect(x + tx + 3, y + ty + 2, 2, 4, c.dot);
+      buf.rect(x + tx + 2, y + ty + 3, 4, 2, c.dot);
+      if ((tx / 8 + ty / 8) % 2 === 0) buf.set(x + tx, y + ty, c.line);
+    }
+  }
+}
+
+/** A staircase down into the floor, opened in the back wall where a poster used to hang, 16×32. */
+export function paintStairs(buf: PixelBuffer, x: number, y: number) {
+  buf.rect(x + 1, y + 7, 14, 25, OUTLINE);
+  buf.rect(x + 2, y + 8, 12, 24, ARCADE.stairs[0]);
+  ARCADE.stairs.forEach((colour, i) => {
+    const top = y + 12 + i * 4;
+    buf.rect(x + 2, top, 12, 4, colour);
+    buf.hline(x + 2, top, 12, mix(colour, "#ffffff", 0.22));
+  });
+  // A faint glow from below, and the handrail's posts.
+  buf.hline(x + 3, y + 31, 10, GOLD.dark);
+  buf.vline(x + 1, y + 10, 21, WOOD.dark);
+  buf.vline(x + 14, y + 10, 21, WOOD.dark);
+}
+
+/** A Voltorb Flip cabinet against the wall, 16×28. */
+export function paintCabinet(buf: PixelBuffer, x: number, y: number) {
+  const c = ARCADE.cabinet;
+  buf.shadeEllipse(x + 8, y + 28, 8, 2, 0.8);
+  buf.rect(x, y, 16, 28, OUTLINE);
+  buf.rect(x + 1, y + 1, 14, 26, c.body);
+  buf.vline(x + 1, y + 1, 26, c.light);
+  buf.vline(x + 14, y + 1, 26, c.dark);
+  // The marquee: four glowing "letters".
+  buf.rect(x + 2, y + 2, 12, 5, c.dark);
+  for (let i = 0; i < 4; i++) buf.rect(x + 3 + i * 3, y + 4, 2, 1, GOLD.base);
+  // The screen, showing a Voltorb.
+  buf.rect(x + 2, y + 8, 12, 10, OUTLINE);
+  buf.rect(x + 3, y + 9, 10, 8, c.screen);
+  paintVoltorb(buf, x + 4, y + 9);
+  // The controls: a stick and two buttons on a sloped deck, then the coin slot.
+  buf.rect(x + 2, y + 19, 12, 4, c.light);
+  buf.rect(x + 4, y + 20, 2, 2, POKEBALL.red);
+  buf.rect(x + 9, y + 20, 2, 2, GOLD.base);
+  buf.rect(x + 12, y + 20, 1, 2, POKEBALL.red);
+  buf.rect(x + 6, y + 24, 4, 2, OUTLINE);
+  buf.hline(x + 7, y + 25, 2, GOLD.light);
+}
+
+/** A slot machine against the wall, 16×28. */
+export function paintSlotMachine(buf: PixelBuffer, x: number, y: number) {
+  const c = ARCADE.slots;
+  buf.shadeEllipse(x + 8, y + 28, 8, 2, 0.8);
+  buf.rect(x, y, 16, 28, OUTLINE);
+  buf.rect(x + 1, y + 1, 14, 26, c.body);
+  buf.vline(x + 1, y + 1, 26, c.light);
+  buf.vline(x + 14, y + 1, 26, c.dark);
+  // Marquee bulbs, alternating.
+  buf.rect(x + 2, y + 2, 12, 4, c.dark);
+  for (let i = 0; i < 6; i++) buf.set(x + 3 + i * 2, y + 3, i % 2 ? GOLD.light : POKEBALL.white);
+  // Three reels: a seven, a cherry, a bar.
+  buf.rect(x + 2, y + 8, 12, 9, OUTLINE);
+  buf.rect(x + 3, y + 9, 10, 7, WHITE);
+  buf.vline(x + 6, y + 9, 7, "#c9ced9");
+  buf.vline(x + 10, y + 9, 7, "#c9ced9");
+  buf.rect(x + 4, y + 10, 2, 1, POKEBALL.red);
+  buf.rect(x + 5, y + 11, 1, 3, POKEBALL.red);
+  buf.rect(x + 7, y + 12, 2, 2, POKEBALL.red);
+  buf.set(x + 8, y + 11, LEAF.base);
+  buf.rect(x + 11, y + 11, 2, 3, OUTLINE);
+  // A tray for the coins.
+  buf.rect(x + 3, y + 19, 10, 3, c.dark);
+  buf.rect(x + 4, y + 22, 8, 3, OUTLINE);
+  buf.hline(x + 5, y + 23, 6, GOLD.base);
+}
+
+/** A round fossil on a stone stand, 16×24: a spiral shell like an Omanyte's. */
+export function paintFossil(buf: PixelBuffer, x: number, y: number) {
+  buf.shadeEllipse(x + 8, y + 23, 7, 2, 0.8);
+  buf.rect(x + 3, y + 19, 10, 5, OUTLINE);
+  buf.rect(x + 4, y + 20, 8, 3, STONE.dark);
+  buf.rect(x + 6, y + 13, 4, 6, OUTLINE);
+  buf.rect(x + 7, y + 13, 2, 6, STONE.base);
+  buf.rect(x + 1, y + 11, 14, 3, OUTLINE);
+  buf.rect(x + 2, y + 11, 12, 2, STONE.light);
+  const shell = "#c9b28a";
+  const line = "#6f5a3c";
+  buf.fillEllipse(x + 8, y + 5, 6, 5.5, line);
+  buf.fillEllipse(x + 8, y + 5, 5, 4.5, shell);
+  for (let t = 0; t < 9.6; t += 0.11) {
+    const r = 0.6 + t * 0.38;
+    buf.set(Math.round(x + 8 + Math.cos(t) * r), Math.round(y + 5 + Math.sin(t) * r * 0.9), line);
+  }
 }

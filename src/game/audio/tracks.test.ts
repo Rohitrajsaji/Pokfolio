@@ -13,11 +13,13 @@ describe("the soundtrack", () => {
 
   it("loops the themes and plays the jingles once", () => {
     expect(ids.filter((id) => TRACKS[id].loop).sort()).toEqual([
+      "arcade",
       "battle",
       "indoor",
       "title",
       "town",
     ]);
+    expect(ids.filter((id) => !TRACKS[id].loop).sort()).toEqual(["caught", "evolved", "healed"]);
   });
 
   it("keeps every note in a comfortable range", () => {
@@ -36,6 +38,18 @@ describe("the soundtrack", () => {
   it("gives the battle more drive than the town, and the town more than indoors", () => {
     expect(TRACKS.battle.bpm).toBeGreaterThan(TRACKS.town.bpm);
     expect(TRACKS.town.bpm).toBeGreaterThan(TRACKS.indoor.bpm);
+  });
+
+  it("keeps the Game Corner livelier than indoors but not as hurried as a battle", () => {
+    expect(TRACKS.arcade.bpm).toBeGreaterThan(TRACKS.indoor.bpm);
+    expect(TRACKS.arcade.bpm).toBeLessThan(TRACKS.battle.bpm);
+  });
+
+  it("keeps the jingles short, so the music isn't kept waiting", () => {
+    for (const id of ["caught", "evolved", "healed"] as const) {
+      const track = compileTrack(TRACKS[id]);
+      expect(track.steps * track.stepSeconds, id).toBeLessThan(5);
+    }
   });
 
   it("catches channels that drift out of step", () => {

@@ -3,6 +3,7 @@
 import { sound } from "../../audio/sound";
 import { toggleFullscreen, useFullscreen } from "../../fullscreen";
 import { useGame } from "../../state/store";
+import { Paged } from "../Paged";
 import { ScreenFrame } from "../ScreenFrame";
 
 function Choice<T extends string>({
@@ -17,8 +18,10 @@ function Choice<T extends string>({
   onPick: (value: T) => void;
 }) {
   return (
-    <fieldset className="option-row">
-      <legend>{label}</legend>
+    <div className="option-row" role="group" aria-label={label}>
+      <span className="option-label" aria-hidden>
+        {label}
+      </span>
       <div className="option-choices">
         {options.map((option) => (
           <button
@@ -33,7 +36,7 @@ function Choice<T extends string>({
           </button>
         ))}
       </div>
-    </fieldset>
+    </div>
   );
 }
 
@@ -45,61 +48,84 @@ export function OptionsScreen() {
   const settings = useGame((state) => state.settings);
   const update = useGame((state) => state.updateSettings);
   const screen = useFullscreen();
+  // The prizes page only shows once there's a prize to see: it would give the hidden Game Corner away.
+  const wonSomething = useGame((state) => state.cleared > 0);
   return (
-    <ScreenFrame title="OPTIONS" accent="#5a6bc4">
-      <Choice
-        label="TEXT SPEED"
-        value={settings.textSpeed}
-        options={TEXT_SPEEDS}
-        onPick={(textSpeed) => update({ textSpeed })}
+    <ScreenFrame title="OPTIONS" accent="#5a6bc4" fit>
+      <Paged
+        label="Options pages"
+        blocks={[
+          <Choice
+            key="speed"
+            label="TEXT SPEED"
+            value={settings.textSpeed}
+            options={TEXT_SPEEDS}
+            onPick={(textSpeed) => update({ textSpeed })}
+          />,
+          <Choice
+            key="time"
+            label="TIME OF DAY"
+            value={settings.time}
+            options={TIMES}
+            onPick={(time) => update({ time })}
+          />,
+          <Choice
+            key="sound"
+            label="SOUND"
+            value={settings.sound ? "on" : "off"}
+            options={SOUND}
+            onPick={(choice) => {
+              update({ sound: choice === "on" });
+              if (choice === "on" && !settings.sound) sound.sfx("confirm");
+            }}
+          />,
+          ...(screen.available
+            ? [
+                <Choice
+                  key="fullscreen"
+                  label="FULLSCREEN"
+                  value={screen.on ? "on" : "off"}
+                  options={SOUND}
+                  onPick={(choice) => {
+                    if ((choice === "on") !== screen.on) void toggleFullscreen();
+                  }}
+                />,
+              ]
+            : []),
+          <div key="actions" className="screen-actions">
+            {wonSomething && (
+              <button
+                type="button"
+                data-nav
+                className="screen-button"
+                onClick={() => useGame.getState().pushScreen({ screen: "prizes" })}
+              >
+                PRIZES
+              </button>
+            )}
+            <button
+              type="button"
+              data-nav
+              className="screen-button"
+              onClick={() => useGame.getState().pushScreen({ screen: "help" })}
+            >
+              HELP
+            </button>
+            <button
+              type="button"
+              data-nav
+              className="screen-button"
+              onClick={() => useGame.getState().pushScreen({ screen: "credits" })}
+            >
+              CREDITS
+            </button>
+          </div>,
+          <p key="hint" className="screen-hint">
+            AUTO follows your clock. SOUND brings music, sound effects and POKéMON cries; it starts
+            off. Settings are remembered in this browser.
+          </p>,
+        ]}
       />
-      <Choice
-        label="TIME OF DAY"
-        value={settings.time}
-        options={TIMES}
-        onPick={(time) => update({ time })}
-      />
-      <Choice
-        label="SOUND"
-        value={settings.sound ? "on" : "off"}
-        options={SOUND}
-        onPick={(choice) => {
-          update({ sound: choice === "on" });
-          if (choice === "on" && !settings.sound) sound.sfx("confirm");
-        }}
-      />
-      {screen.available && (
-        <Choice
-          label="FULLSCREEN"
-          value={screen.on ? "on" : "off"}
-          options={SOUND}
-          onPick={(choice) => {
-            if ((choice === "on") !== screen.on) void toggleFullscreen();
-          }}
-        />
-      )}
-      <div className="screen-actions">
-        <button
-          type="button"
-          data-nav
-          className="screen-button"
-          onClick={() => useGame.getState().pushScreen({ screen: "help" })}
-        >
-          HELP
-        </button>
-        <button
-          type="button"
-          data-nav
-          className="screen-button"
-          onClick={() => useGame.getState().pushScreen({ screen: "credits" })}
-        >
-          CREDITS
-        </button>
-      </div>
-      <p className="screen-hint">
-        AUTO follows your clock. SOUND brings music, sound effects and POKéMON cries; it starts off.
-        Settings are remembered in this browser.
-      </p>
     </ScreenFrame>
   );
 }

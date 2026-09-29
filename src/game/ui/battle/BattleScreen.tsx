@@ -28,11 +28,11 @@ import { usePreloadedImages } from "../screens/parts";
 import { useInputLayer } from "../useInputLayer";
 import { useMenuNavigation } from "../useMenuNavigation";
 import { useReducedMotion } from "../useReducedMotion";
+import { fieldFor } from "./field";
 import { useTypewriter } from "../useTypewriter";
 
 /** Sprite pixels per game pixel: the wild Pokémon, and your partner's closer back view. */
 const WILD_SCALE = 1;
-const PARTNER_SCALE = 2;
 /** Keep these in step with the battle animations in globals.css. */
 const INTRO_MS = 1300;
 const THROW_MS = 1300;
@@ -160,7 +160,7 @@ function WildBox({ state }: { state: BattleState }) {
   );
 }
 
-function PartnerBox() {
+function PartnerBox({ numbers }: { numbers: boolean }) {
   const maxHp = battle.levels.partner * 2 + 10;
   return (
     <div
@@ -173,9 +173,11 @@ function PartnerBox() {
         <span className="hp-level">Lv{battle.levels.partner}</span>
       </p>
       <HpBar hp={1} />
-      <p className="hp-numbers">
-        {maxHp}/{maxHp}
-      </p>
+      {numbers && (
+        <p className="hp-numbers">
+          {maxHp}/{maxHp}
+        </p>
+      )}
     </div>
   );
 }
@@ -186,11 +188,13 @@ function Scene({
   beat,
   motionKey,
   reducedMotion,
+  partnerScale,
 }: {
   view: BattleState;
   beat?: Beat;
   motionKey: string;
   reducedMotion: boolean;
+  partnerScale: number;
 }) {
   const cue = beat?.cue;
   const wildMotion = (cue && WILD_MOTION[cue]) ?? "";
@@ -228,7 +232,7 @@ function Scene({
           key={partnerMotion ? `partner:${motionKey}` : "partner"}
           className={`battle-partner ${partnerMotion}`}
         >
-          <BattleSprite mon={site.partner} view="back" scale={PARTNER_SCALE} />
+          <BattleSprite mon={site.partner} view="back" scale={partnerScale} />
         </div>
       )}
     </div>
@@ -321,7 +325,9 @@ function MoveMenu({ onPick, onBack }: { onPick: (index: number) => void; onBack:
           >
             {move.name}
             <span className="type-badge" style={{ background: TYPE_COLORS[move.type] }}>
-              {move.type.toUpperCase()}
+              {/* Three letters, so the name and the type fit on one line; the whole word is for screen readers. */}
+              <span className="sr-only">{move.type.toUpperCase()}</span>
+              <span aria-hidden>{move.type.slice(0, 3).toUpperCase()}</span>
             </span>
           </button>
         ))}
@@ -403,6 +409,7 @@ function playSounds(beat: Beat): void {
 /** The catch-to-hire battle against the wild ROHIT. */
 export function BattleScreen() {
   const reducedMotion = useReducedMotion();
+  const { partnerScale, partnerNumbers } = fieldFor(useGame((state) => state.view?.height ?? 180));
   const [intro, setIntro] = useState(() => !reducedMotion);
   const [beats, setBeats] = useState<Beat[]>(() => opening(startState()));
   const [at, setAt] = useState(0);
@@ -495,18 +502,30 @@ export function BattleScreen() {
       aria-modal="true"
       aria-label={`Battle with the wild ${WILD_NAME}`}
     >
-      <Scene
-        view={view}
-        beat={intro ? undefined : beat}
-        motionKey={lineId}
-        reducedMotion={reducedMotion}
-      />
+      <div className="battle-sky" aria-hidden>
+        <span className="battle-cloud battle-cloud-a" />
+        <span className="battle-cloud battle-cloud-b" />
+        <span className="battle-cloud battle-cloud-c" />
+      </div>
+      <div className="battle-stage">
+        <Scene
+          view={view}
+          beat={intro ? undefined : beat}
+          motionKey={lineId}
+          reducedMotion={reducedMotion}
+          partnerScale={partnerScale}
+        />
+        {!intro && (
+          <>
+            <WildBox state={view} />
+            {view.partnerOut && <PartnerBox numbers={partnerNumbers} />}
+          </>
+        )}
+      </div>
       {intro ? (
         <div className="battle-flash" aria-hidden />
       ) : (
         <>
-          <WildBox state={view} />
-          {view.partnerOut && <PartnerBox />}
           {beat ? (
             <BattleText beat={beat} id={lineId} waiting={waiting} onNext={onNext} />
           ) : menu === "fight" ? (

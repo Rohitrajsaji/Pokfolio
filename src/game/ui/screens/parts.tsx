@@ -2,10 +2,17 @@
 
 import { profile, site } from "@content";
 import type { PokemonRef, PokeType, ScreenRequest } from "@content/types";
-import { useEffect, useRef, type ReactNode } from "react";
-import { avatarLook, CHARACTER_HEIGHT, CHARACTER_WIDTH, characterFrame } from "@/art/characters";
+import {
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type ReactEventHandler,
+  type ReactNode,
+} from "react";
+import { avatarLook } from "@/art/characters";
 import { paintBuffer } from "@/art/canvas";
 import { TYPE_COLORS } from "@/art/palette";
+import { PORTRAIT_HEIGHT, PORTRAIT_WIDTH, portraitBuffer } from "@/art/portrait";
 import { pokemonSpriteUrl } from "@/pokeapi/sprites";
 import { Sprite } from "@/ui/Sprite";
 
@@ -24,6 +31,8 @@ export const SCREEN_LINKS: Readonly<Record<ScreenRequest["screen"], string>> = {
   help: "OPEN THE HELP",
   credits: "OPEN THE CREDITS",
   resume: "READ THE RÉSUMÉ",
+  voltorb: "PLAY VOLTORB FLIP",
+  prizes: "SEE THE PRIZES",
 };
 
 export function TypeBadges({ types }: { types?: readonly PokeType[] }) {
@@ -45,11 +54,15 @@ export function MonSprite({
   view = "front",
   decorative = false,
   className,
+  style,
+  onLoad,
 }: {
   mon: PokemonRef;
   view?: "front" | "back";
   decorative?: boolean;
   className?: string;
+  style?: CSSProperties;
+  onLoad?: ReactEventHandler<HTMLImageElement>;
 }) {
   return (
     <Sprite
@@ -57,6 +70,8 @@ export function MonSprite({
       alt={decorative ? "" : (mon.nickname ?? mon.name)}
       size={96}
       className={className ? `mon-sprite ${className}` : "mon-sprite"}
+      style={style}
+      onLoad={onLoad}
     />
   );
 }
@@ -93,17 +108,17 @@ export function MessageBox({
   );
 }
 
-/** Prof. Rohit's in-game look, drawn from `site.avatar`. */
+/** Prof. Rohit's portrait, drawn from `site.avatar`. */
 export function AvatarPortrait({ className }: { className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
-    if (ref.current) paintBuffer(ref.current, characterFrame(avatarLook(site.avatar), "down"));
+    if (ref.current) paintBuffer(ref.current, portraitBuffer(avatarLook(site.avatar)));
   }, []);
   return (
     <canvas
       ref={ref}
-      width={CHARACTER_WIDTH}
-      height={CHARACTER_HEIGHT}
+      width={PORTRAIT_WIDTH}
+      height={PORTRAIT_HEIGHT}
       className={className ? `avatar-portrait ${className}` : "avatar-portrait"}
       role="img"
       aria-label={`${profile.name} as a pixel-art trainer`}

@@ -83,7 +83,10 @@ describe("every screen", () => {
     (request, title) => {
       open(request);
       const frame = screen.getByRole("dialog", { name: title });
-      expect(frame.querySelector("[data-current]")).not.toBeNull();
+      // Screens that only show something (no buttons of their own) have no cursor to start on.
+      if (!["card", "jobs", "help"].includes(request.screen)) {
+        expect(frame.querySelector("[data-current]")).not.toBeNull();
+      }
       press("b");
       expect(useGame.getState().overlay).toBeNull();
     },
@@ -112,17 +115,18 @@ describe("BAG and POKé MART", () => {
     open({ screen: "bag" });
     press("right");
     expect(screen.getByRole("tab", { selected: true }).textContent).toBe(skills[1].name);
-    expect(screen.getByText(skills[1].skills[0])).toBeTruthy();
+    // The page is laid out twice (once out of sight, for measuring), so it may be found twice.
+    expect(screen.getAllByText(skills[1].skills[0]).length).toBeGreaterThan(0);
   });
 
-  it("won't sell a skill, but points the way to the job board", () => {
+  it("won't sell a skill, and doesn't send you anywhere else either", () => {
     open({ screen: "bag", shop: true });
     const skill = skills[0].skills[0];
     fireEvent.click(screen.getByRole("button", { name: (name) => name.includes(skill) }));
     const refusal = fillWith(dialogue.shop.refusal[0], { item: `TM01 ${skill.toUpperCase()}` });
     expect(screen.getByText(refusal)).toBeTruthy();
-    fireEvent.click(screen.getByRole("button", { name: `${SCREEN_LINKS.jobs}` }));
-    expect(useGame.getState().overlay).toMatchObject({ request: { screen: "jobs" } });
+    expect(screen.queryByRole("button", { name: SCREEN_LINKS.jobs })).toBeNull();
+    expect(screen.queryByRole("button", { name: SCREEN_LINKS.contact })).toBeNull();
   });
 });
 
@@ -170,7 +174,7 @@ describe("ASK THE PROFESSOR", () => {
     fireEvent.click(follow);
     expect(useGame.getState().overlay).toMatchObject({
       request: topic.then,
-      back: { kind: "screen", request: { screen: "ask" } },
+      back: null,
     });
   });
 
@@ -231,7 +235,7 @@ describe("POKéGEAR", () => {
     Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
     open({ screen: "contact" });
     fireEvent.click(screen.getByRole("button", { name: "COPY" }));
-    expect(await screen.findByText(/Couldn't copy automatically/)).toBeTruthy();
+    expect((await screen.findAllByText(/Couldn't copy automatically/)).length).toBeGreaterThan(0);
   });
 });
 
@@ -288,17 +292,11 @@ describe("RÉSUMÉ", () => {
     for (const ed of profile.education) expect(text).toContain(ed.institution);
   });
 
-  it("scrolls with up and down, without moving the tab", () => {
+  it("doesn't scroll: it pages instead, and up and down leave the tab where it is", () => {
     open({ screen: "resume" });
-    const body = document.querySelector<HTMLElement>(".px-scroll-body");
-    if (!body) throw new Error("expected a scrolling body");
-    const scrollBy = vi.fn();
-    body.scrollBy = scrollBy as unknown as typeof body.scrollBy;
+    expect(document.querySelector(".px-scroll-body")).toBeNull();
     press("down");
     press("up");
-    expect(scrollBy).toHaveBeenCalledTimes(2);
-    expect(scrollBy.mock.calls[0][0].top).toBeGreaterThan(0);
-    expect(scrollBy.mock.calls[1][0].top).toBeLessThan(0);
     expect(selectedTab()).toBe("SUMMARY");
   });
 
@@ -314,7 +312,7 @@ describe("RÉSUMÉ", () => {
 describe("HELP and CREDITS", () => {
   it("HELP lists every control and tip from the content files", () => {
     open({ screen: "help" });
-    const text = document.querySelector(".px-scroll-content")?.textContent ?? "";
+    const text = document.querySelector(".screen-fit")?.textContent ?? "";
     for (const [button, does] of dialogue.help.controls) {
       expect(text).toContain(button);
       expect(text).toContain(does);
@@ -324,7 +322,7 @@ describe("HELP and CREDITS", () => {
 
   it("CREDITS thanks PokeAPI and carries the fan disclaimer", () => {
     open({ screen: "credits" });
-    const text = document.querySelector(".px-scroll-content")?.textContent ?? "";
+    const text = document.querySelector(".screen-fit")?.textContent ?? "";
     expect(text).toContain(site.disclaimer);
     const link = screen.getByRole("link", { name: dialogue.credits.link.label });
     expect(link.getAttribute("href")).toBe(dialogue.credits.link.url);

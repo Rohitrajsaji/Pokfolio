@@ -1,12 +1,19 @@
 import { defineConfig, devices } from "@playwright/test";
 
-/** Real-browser smoke tests: `npm run e2e`. Chrome (installed here), plus Playwright's WebKit (Safari) and Firefox. */
+/**
+ * Real-browser tests: `npm run e2e`. Chrome (installed here), plus Playwright's WebKit (Safari) and Firefox.
+ * To run against a server that's already up (e.g. `npm run dev`), set E2E_URL=http://localhost:3000.
+ */
+const external = process.env.E2E_URL;
+
 export default defineConfig({
   testDir: "e2e",
   testMatch: "*.spec.ts",
   timeout: 30_000,
   retries: 0,
-  use: { baseURL: "http://localhost:3200" },
+  fullyParallel: true,
+  workers: 4,
+  use: { baseURL: external ?? "http://localhost:3200" },
   projects: [
     { name: "chrome", use: { ...devices["Desktop Chrome"], channel: "chrome" } },
     { name: "webkit", use: { ...devices["Desktop Safari"] } },
@@ -15,10 +22,12 @@ export default defineConfig({
       ? [{ name: "firefox", use: { ...devices["Desktop Firefox"] } }]
       : []),
   ],
-  webServer: {
-    command: "npm run build && npx next start -p 3200",
-    url: "http://localhost:3200",
-    reuseExistingServer: true,
-    timeout: 180_000,
-  },
+  webServer: external
+    ? undefined
+    : {
+        command: "npm run build && npx next start -p 3200",
+        url: "http://localhost:3200",
+        reuseExistingServer: true,
+        timeout: 180_000,
+      },
 });

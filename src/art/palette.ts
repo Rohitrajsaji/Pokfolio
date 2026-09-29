@@ -22,6 +22,24 @@ export const FLOWER = {
   white: "#fbfbf3",
 };
 
+export const WATER = {
+  light: "#a5d8f8",
+  base: "#5aa8e0",
+  dark: "#3f86c4",
+  edge: "#2b5f96",
+  foam: "#e6f5fd",
+  lotus: "#f6a8cb",
+};
+/** Dust kicked up by running, and the sleeper's snores: pale enough to show on grass and on sand. */
+export const DUST = { light: "#f4ecd6", shade: "#cbbf9f" };
+export const SNORLAX = {
+  body: "#3d6b7d",
+  shade: "#2e5262",
+  belly: "#f0e4c0",
+  bellyShade: "#d6c79c",
+  claw: "#f8f8f0",
+};
+
 export interface RoofColors {
   light: string;
   base: string;

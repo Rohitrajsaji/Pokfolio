@@ -23,6 +23,7 @@ describe("musicFor", () => {
     const play = { stage: "play" } as const;
     expect(musicFor({ ...play, mapId: "town", overlay: null })).toBe("town");
     expect(musicFor({ ...play, mapId: "lab", overlay: null })).toBe("indoor");
+    expect(musicFor({ ...play, mapId: "arcade", overlay: null })).toBe("arcade");
     expect(musicFor({ ...play, mapId: "town", overlay: { kind: "battle", id: 1 } })).toBe("battle");
     expect(musicFor({ ...play, mapId: "town", overlay: { kind: "menu" } })).toBe("town");
   });

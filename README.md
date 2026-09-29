@@ -38,6 +38,20 @@ Sound starts off. Turn it on with the SOUND button on the title screen or in OPT
 and sound effects are original, synthesised in the browser as the game runs; the Pokémon cries
 come from PokeAPI.
 
+### Secrets
+
+A few things are hidden in the town for curious visitors: a hidden Game Corner with a faithful
+VOLTORB FLIP (clearing levels wins a trainer look and a screen palette, for that visit only),
+and five Pokémon-lore nods in the world itself. Nothing is remembered between visits. They are
+all plain content, so you can reword or move them:
+
+- `visits` on any sign, person or piece of furniture (`content/world.ts`) says something different
+  from the Nth time it is talked to; `effect` can unlock a secret, play a cry or a jingle, or start a
+  cameo (a Pokémon in the TV, a screen glitch).
+- `routes` in the town spec sets off an effect when the visitor walks a line of tiles in one go.
+- `content/cosmetics.ts` lists the trainer looks and screen palettes, and `content/dialogue.ts` holds
+  the Voltorb Flip and prize text.
+
 ### Your in-game look
 
 Prof. Rohit's sprite is drawn from `avatar` in [`content/site.ts`](content/site.ts): hairstyle
@@ -116,8 +130,9 @@ Copy an entry in `content/projects.ts` and change it:
 
 `npm run check` runs the typecheck, lint, unit tests and a production build. `npm run e2e` adds
 real-browser smoke tests in Chrome and Playwright's WebKit (Safari); set `E2E_FIREFOX=1` to add
-Firefox (`npx playwright install webkit firefox` first) (window shapes from a 320px
-phone to 4K, keyboard-only play, the printed résumé, PokeAPI offline, reduced motion). It builds
+Firefox (`npx playwright install webkit firefox` first). They cover window shapes from a 320px
+phone to 4K, keyboard-only play, the printed résumé, PokeAPI offline, reduced motion, the hidden
+Game Corner and Voltorb Flip, and each easter egg. It builds
 the site and serves it on port 3200 itself.
 
 ## Deploying

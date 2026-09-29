@@ -2,10 +2,11 @@
  * A map compiled for play. Per-tile facts live in flat arrays indexed by
  * `y * width + x` (see `tileIndex`), which keeps lookups cheap every frame.
  */
-import type { Direction, Interaction, NpcSpec, RoomId } from "@content/types";
+import type { Direction, Effect, Interaction, NpcSpec, RoomId, SecretRoomId } from "@content/types";
 import type { PixelBuffer } from "@/art/pixel-buffer";
+import type { WaterNeighbours } from "@/art/terrain";
 
-export type MapId = "town" | RoomId;
+export type MapId = "town" | RoomId | SecretRoomId;
 
 export interface Spot {
   x: number;
@@ -41,10 +42,24 @@ export interface RuntimeMap {
   edges: Set<number>;
   edge: string[];
   flowers: Array<{ x: number; y: number; color: "red" | "yellow" }>;
+  /** Tiles of water, drawn afresh each frame so the ripples move. */
+  water?: Array<{ x: number; y: number; nb: WaterNeighbours }>;
+  /** Where each sleeper's snores start, in pixels from the map's corner. */
+  snoring?: Array<{ x: number; y: number }>;
   npcs: NpcSpec[];
   start: Spot;
+  /** Secret routes: walking onto these tiles in order, without a step elsewhere between, sets off the effect. */
+  routes?: Array<{ id: string; tiles: number[]; effect: Effect }>;
+  /** True when a hidden staircase in this room has been opened (see `RoomSpec.stairs`). */
+  stairsOpen?: boolean;
   /** Draws everything that never moves. `lit` switches on windows and lamps. */
   paint(buf: PixelBuffer, lit: boolean): void;
+  /**
+   * What shows beyond the edge of a map smaller than the screen: one square tile, repeated
+   * from the map's own corner. Outdoors that's the tree border the real games repeat; without
+   * one (indoors) the space stays black.
+   */
+  border?: { size: number; paint(buf: PixelBuffer): void };
 }
 
 export function tileIndex(map: { width: number }, x: number, y: number): number {

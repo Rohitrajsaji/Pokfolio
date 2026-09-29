@@ -2,7 +2,19 @@
 import { paintText } from "./font";
 import { rle, sym, type Grid } from "./grid";
 import { hash2 } from "./noise";
-import { FENCE, FLOWER, GLASS, LEAF, LIT, OUTLINE, STONE, TRUNK, WHITE, WOOD } from "./palette";
+import {
+  FENCE,
+  FLOWER,
+  GLASS,
+  LEAF,
+  LIT,
+  OUTLINE,
+  SNORLAX,
+  STONE,
+  TRUNK,
+  WHITE,
+  WOOD,
+} from "./palette";
 import type { PixelBuffer } from "./pixel-buffer";
 
 // ---------------------------------------------------------------- tree (32×32)
@@ -220,5 +232,60 @@ export function paintJobBoard(buf: PixelBuffer, ox: number, oy: number): void {
       buf.hline(ox + n.x + 1, oy + line, n.w - 2, "#9aa0b0");
     }
     buf.set(ox + n.x + Math.floor(n.w / 2), oy + n.y, FLOWER.red);
+  }
+}
+
+// ---------------------------------------------------------------- a sleeping giant (32×32)
+
+/**
+ * A huge Pokémon asleep on its back, seen from the front, filling two tiles by two: a round dark-teal
+ * body with a cream belly, a head with a cream muzzle and shut eyes, and its hands and feet resting up.
+ * Drawn here from scratch.
+ */
+export function paintSnorlax(buf: PixelBuffer, ox: number, oy: number): void {
+  const c = SNORLAX;
+  buf.shadeEllipse(ox + 16, oy + 29, 15, 3, 0.7);
+  // Feet, tucked under the belly.
+  for (const fx of [7, 25]) {
+    buf.fillEllipse(ox + fx, oy + 27, 5, 3.5, OUTLINE);
+    buf.fillEllipse(ox + fx, oy + 27, 4, 2.5, c.belly);
+    for (const dx of [-2, 0, 2]) buf.set(ox + fx + dx, oy + 25, c.claw);
+  }
+  // Turns body-coloured pixels in a band of rows to the darker shade, so the belly of it curves away.
+  const shadeRows = (from: number, to: number, x0: number, x1: number) => {
+    for (let y = oy + from; y <= oy + to; y++) {
+      for (let x = ox + x0; x <= ox + x1; x++) if (buf.get(x, y) === c.body) buf.set(x, y, c.shade);
+    }
+  };
+  // The body, and the belly on it.
+  buf.fillEllipse(ox + 16, oy + 19, 15, 11, OUTLINE);
+  buf.fillEllipse(ox + 16, oy + 19, 14, 10, c.body);
+  shadeRows(26, 28, 0, 31);
+  buf.fillEllipse(ox + 16, oy + 22, 9, 6.5, c.bellyShade);
+  buf.fillEllipse(ox + 16, oy + 21, 8.5, 6, c.belly);
+  // Ears.
+  for (const ex of [9, 23]) {
+    buf.fillEllipse(ox + ex, oy + 3, 3, 2.5, OUTLINE);
+    buf.fillEllipse(ox + ex, oy + 3.5, 2, 1.5, c.body);
+  }
+  // The head, with a cream muzzle.
+  buf.fillEllipse(ox + 16, oy + 10, 9.5, 8, OUTLINE);
+  buf.fillEllipse(ox + 16, oy + 10, 8.5, 7, c.body);
+  shadeRows(15, 17, 6, 26);
+  buf.fillEllipse(ox + 16, oy + 12, 6.5, 4.5, c.belly);
+  // Shut eyes (a short line each), a small nose, a small mouth.
+  buf.hline(ox + 11, oy + 9, 3, OUTLINE);
+  buf.hline(ox + 19, oy + 9, 3, OUTLINE);
+  buf.set(ox + 15, oy + 11, OUTLINE);
+  buf.set(ox + 17, oy + 11, OUTLINE);
+  buf.hline(ox + 14, oy + 14, 5, OUTLINE);
+  // Two small lower fangs.
+  buf.set(ox + 13, oy + 15, c.claw);
+  buf.set(ox + 19, oy + 15, c.claw);
+  // Arms folded on its belly.
+  for (const ax of [6, 26]) {
+    buf.fillEllipse(ox + ax, oy + 19, 4, 3.5, OUTLINE);
+    buf.fillEllipse(ox + ax, oy + 19, 3, 2.5, c.body);
+    buf.set(ox + ax + (ax < 16 ? 2 : -2), oy + 21, c.claw);
   }
 }

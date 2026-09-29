@@ -2,9 +2,10 @@
 
 import { projects } from "@content";
 import type { Project } from "@content/types";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { pokemonSpriteUrl } from "@/pokeapi/sprites";
 import { sound } from "../../audio/sound";
+import { Paged } from "../Paged";
 import { ScreenFrame } from "../ScreenFrame";
 import { MonSprite, TypeBadges, usePreloadedImages } from "./parts";
 
@@ -12,68 +13,72 @@ const dexNumber = (index: number) => `No. ${String(index + 1).padStart(3, "0")}`
 const MASCOT_SPRITES = projects.map((project) => pokemonSpriteUrl(project.mascot.dex));
 
 function DexEntry({ project, index }: { project: Project; index: number }) {
-  const nameId = useId();
   const { mascot, links } = project;
-  return (
-    <article className="entry" aria-labelledby={nameId}>
-      <div className="entry-top">
-        <div className="entry-portrait">
-          <MonSprite mon={mascot} />
-        </div>
-        <div>
-          <p className="entry-kicker">
-            {dexNumber(index)} · {mascot.name}
-          </p>
-          <h3 id={nameId} className="entry-name">
-            {project.name.toUpperCase()}
-          </h3>
-          <p className="entry-kind">{project.tagline}</p>
-          <TypeBadges types={mascot.types} />
-          {project.status && (
-            <p className="entry-status">STATUS · {project.status.toUpperCase()}</p>
-          )}
-        </div>
+  const blocks = [
+    <div key="top" className="entry-top">
+      <div className="entry-portrait">
+        <MonSprite mon={mascot} />
       </div>
-      <p className="readable">{project.summary}</p>
-      <h4 className="section-title">{project.highlightsTitle.toUpperCase()}</h4>
-      <ul className="bullets readable">
-        {project.highlights.map((highlight) => (
-          <li key={highlight}>{highlight}</li>
-        ))}
-      </ul>
-      <ul className="chips" aria-label="Tags">
-        {project.tags.map((tag) => (
-          <li key={tag} className="chip">
-            {tag}
-          </li>
-        ))}
-      </ul>
-      {links && (links.github || links.demo) && (
-        <div className="screen-actions">
-          {links.github && (
-            <a
-              data-nav
-              className="screen-button"
-              href={links.github}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              GITHUB
-            </a>
-          )}
-          {links.demo && (
-            <a
-              data-nav
-              className="screen-button"
-              href={links.demo}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              LIVE DEMO
-            </a>
-          )}
-        </div>
-      )}
+      <div>
+        <p className="entry-kicker">
+          {dexNumber(index)} · {mascot.name}
+        </p>
+        <h3 className="entry-name">{project.name.toUpperCase()}</h3>
+        <p className="entry-kind">{project.tagline}</p>
+        <TypeBadges types={mascot.types} />
+        {project.status && <p className="entry-status">STATUS · {project.status.toUpperCase()}</p>}
+      </div>
+    </div>,
+    <p key="summary" className="readable">
+      {project.summary}
+    </p>,
+    ...project.highlights.map((highlight, i) => (
+      <div key={highlight}>
+        {i === 0 && <h4 className="section-title">{project.highlightsTitle.toUpperCase()}</h4>}
+        <ul className="bullets readable">
+          <li>{highlight}</li>
+        </ul>
+      </div>
+    )),
+    <ul key="tags" className="chips" aria-label="Tags">
+      {project.tags.map((tag) => (
+        <li key={tag} className="chip">
+          {tag}
+        </li>
+      ))}
+    </ul>,
+  ];
+  if (links && (links.github || links.demo)) {
+    blocks.push(
+      <div key="links" className="screen-actions">
+        {links.github && (
+          <a
+            data-nav
+            className="screen-button"
+            href={links.github}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GITHUB
+          </a>
+        )}
+        {links.demo && (
+          <a
+            data-nav
+            className="screen-button"
+            href={links.demo}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            LIVE DEMO
+          </a>
+        )}
+      </div>,
+    );
+  }
+  return (
+    <article className="entry entry-fit" aria-label={project.name}>
+      <Paged blocks={blocks} label={`${project.name} pages`} />
     </article>
   );
 }
@@ -91,6 +96,7 @@ export function DexScreen({ project }: { project?: string }) {
     <ScreenFrame
       title="POKéDEX"
       accent="#d94b4b"
+      fit
       initial={start}
       onSelect={(item) => {
         if (!item.dataset.index) return;
@@ -99,7 +105,7 @@ export function DexScreen({ project }: { project?: string }) {
         sound.cry(projects[selected].mascot.dex);
       }}
     >
-      <div className="browse">
+      <div className="browse browse-fit">
         <div className="browse-side">
           <ol className="browse-list" aria-label="Projects">
             {projects.map((entry, i) => (

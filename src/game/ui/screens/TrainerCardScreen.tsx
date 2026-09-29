@@ -2,9 +2,9 @@
 
 import { experience, profile } from "@content";
 import { formatRange, formatYearMonth } from "@/lib/dates";
-import { useGame } from "../../state/store";
+import { Paged } from "../Paged";
 import { ScreenFrame } from "../ScreenFrame";
-import { AvatarPortrait, SCREEN_LINKS } from "./parts";
+import { AvatarPortrait } from "./parts";
 
 /** A five-digit trainer ID worked out from the name, so it never changes. */
 export function trainerId(name: string): string {
@@ -39,8 +39,11 @@ const FACTS: ReadonlyArray<readonly [string, string]> = [
 
 /** The TRAINER CARD: who Rohit is, at a glance. */
 export function TrainerCardScreen() {
-  return (
-    <ScreenFrame title="TRAINER CARD" accent="#c24f7d">
+  // The first few facts sit beside the portrait; the rest each take their own place in the pages.
+  const beside = FACTS.slice(0, 3);
+  const facts = FACTS.slice(3);
+  const blocks = [
+    <div key="head" className="card-head">
       <div className="trainer-card">
         <p className="card-top">
           <span>IDNo. {trainerId(profile.name)}</span>
@@ -48,8 +51,8 @@ export function TrainerCardScreen() {
         </p>
         <div className="card-body">
           <dl className="card-facts">
-            {FACTS.map(([label, value], index) => (
-              <div key={index} className="card-fact">
+            {beside.map(([label, value]) => (
+              <div key={label} className="card-fact">
                 <dt>{label}</dt>
                 <dd>{value}</dd>
               </div>
@@ -58,30 +61,25 @@ export function TrainerCardScreen() {
           <AvatarPortrait className="card-portrait" />
         </div>
       </div>
-      <h3 className="section-title">ABOUT</h3>
-      {profile.summary.map((paragraph, index) => (
-        <p key={index} className="readable paragraph">
-          {paragraph}
-        </p>
-      ))}
-      <div className="screen-actions">
-        <button
-          type="button"
-          data-nav
-          className="screen-button"
-          onClick={() => useGame.getState().pushScreen({ screen: "contact" })}
-        >
-          {SCREEN_LINKS.contact}
-        </button>
-        <button
-          type="button"
-          data-nav
-          className="screen-button"
-          onClick={() => useGame.getState().pushScreen({ screen: "resume" })}
-        >
-          {SCREEN_LINKS.resume}
-        </button>
+    </div>,
+    ...facts.map(([label, value], index) => (
+      <dl key={index} className="card-facts">
+        <div className="card-fact">
+          <dt>{label}</dt>
+          <dd>{value}</dd>
+        </div>
+      </dl>
+    )),
+    ...profile.summary.map((paragraph, index) => (
+      <div key={paragraph}>
+        {index === 0 && <h3 className="section-title">ABOUT</h3>}
+        <p className="readable">{paragraph}</p>
       </div>
+    )),
+  ];
+  return (
+    <ScreenFrame title="TRAINER CARD" accent="#c24f7d" fit>
+      <Paged blocks={blocks} label="Trainer card pages" />
     </ScreenFrame>
   );
 }

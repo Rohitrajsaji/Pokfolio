@@ -170,9 +170,62 @@ export interface AvatarLook {
   trousersColor: string;
 }
 
+// ---------------------------------------------------------------- prizes
+
+/** The screen colours a visitor can unlock. "normal" is always there. */
+export type PaletteId = "normal" | "gameboy" | "sepia";
+
+export interface PaletteSpec {
+  id: PaletteId;
+  name: string;
+  /** The level of VOLTORB FLIP that has to be cleared to win it (0: always there). */
+  earnedAt: number;
+}
+
+/**
+ * A different way for the visitor's own character to look. Anything left out stays as it is in the
+ * classic look (red cap, blue shirt). Colours are "#rrggbb".
+ */
+export interface PlayerLookSpec {
+  id: string;
+  name: string;
+  /** The level of VOLTORB FLIP that has to be cleared to win it (0: always there). */
+  earnedAt: number;
+  hairStyle?: "short" | "long" | "buns" | "bald" | "cap";
+  outfit?: "shirt" | "coat" | "dress";
+  glasses?: boolean;
+  hair?: string;
+  skin?: string;
+  top?: string;
+  accent?: string;
+  bottom?: string;
+  shoes?: string;
+  hat?: string;
+}
+
 // ---------------------------------------------------------------- the game world
 
 export type Direction = "up" | "down" | "left" | "right";
+
+/** Things a visitor can discover that change the world for the rest of their visit (nothing is saved). */
+export type SecretId = "arcade";
+
+/** Short full-screen moments: a Pokémon popping out of something, a glitch. */
+export type CameoId = "rotom" | "missingno";
+
+/** What happens once an interaction's lines are done (and after YES, if it asked). */
+export interface Effect {
+  /** Reveals a secret, such as a hidden staircase. */
+  unlock?: SecretId;
+  /** A short full-screen moment. */
+  cameo?: CameoId;
+  /** Lines said once the cameo is over. */
+  after?: string[];
+  /** A Pokémon's cry, by National Pokédex number. */
+  cry?: number;
+  /** A short tune in place of the music, like the one the nurse plays. */
+  jingle?: "healed";
+}
 
 /**
  * Something the visitor can read or talk to. Text may use {name} (your short
@@ -180,11 +233,20 @@ export type Direction = "up" | "down" | "left" | "right";
  */
 export interface Interaction {
   lines?: string[];
-  /** A YES/NO question after the lines. YES continues to `then`; NO shows `no`. */
+  /** A YES/NO question after the lines. YES continues to `effect` and `then`; NO shows `no`. */
   confirm?: { question: string; no?: string[] };
-  /** A screen opened after the lines (and after YES). */
+  /** What happens after the lines (and after YES). */
+  effect?: Effect;
+  /** A screen opened after the lines and the effect. */
   then?: ScreenRequest;
+  /**
+   * What to do instead as the visitor keeps coming back. From the `from`-th visit on (1 is the
+   * first) the latest one that applies replaces all of the above: nothing carries over.
+   */
+  visits?: Visit[];
 }
+
+export type Visit = Omit<Interaction, "visits"> & { from: number };
 
 /** Screens the game can open. Ids refer to entries in projects.ts and experience.ts. */
 export type ScreenRequest =
@@ -200,7 +262,9 @@ export type ScreenRequest =
   | { screen: "options" }
   | { screen: "help" }
   | { screen: "credits" }
-  | { screen: "resume" };
+  | { screen: "resume" }
+  | { screen: "voltorb" }
+  | { screen: "prizes" };
 
 /** Who an NPC looks like. "professor" is you, drawn from `site.avatar`. */
 export type CastMember =
@@ -223,15 +287,18 @@ export interface NpcSpec {
 export type TownProp =
   | { prop: "sign" | "mailbox"; x: number; y: number; read: Interaction }
   /** 2×2 tiles; (x, y) is the top-left. */
-  | { prop: "jobBoard"; x: number; y: number; read: Interaction }
+  | { prop: "jobBoard" | "snorlax"; x: number; y: number; read: Interaction }
   | { prop: "lamp" | "bush" | "rock" | "fence"; x: number; y: number };
 
 export type RoomId = "house" | "lab" | "center" | "mart" | "gym";
 
+/** Rooms no building leads to: they are found through a secret. */
+export type SecretRoomId = "arcade";
+
 export interface TownSpec {
   /**
    * The ground, one string per row: . grass, = path, " tall grass,
-   * * red flowers, + yellow flowers, T tree (trees are 2×2 blocks).
+   * * red flowers, + yellow flowers, ~ water (you can't walk on it), T tree (trees are 2×2 blocks).
    */
   ground: string[];
   /** Each building's door leads into the room with the same id. (x, y) is the top-left tile. */
@@ -239,8 +306,13 @@ export interface TownSpec {
   props: TownProp[];
   npcs: NpcSpec[];
   start: { x: number; y: number; facing: Direction };
-  /** Said when the visitor tries to walk off the edge of the map. */
-  edge: string[];
+  /** Said when the visitor tries to walk off the edge of the map, if they can reach it. */
+  edge?: string[];
+  /**
+   * Secret routes: walking onto these tiles one after another, without stepping anywhere else
+   * in between, sets off the effect (once per visit).
+   */
+  routes?: Array<{ id: string; tiles: Array<{ x: number; y: number }>; effect: Effect }>;
 }
 
 /**
@@ -248,8 +320,26 @@ export interface TownSpec {
  * hang on the back wall, so only their x matters.
  */
 export type Furniture = { x: number; y: number; read?: Interaction } & (
-  | { item: "window" | "poster" | "diploma" | "certificate" }
-  | { item: "bookshelf" | "shelf" | "pc" | "tv" | "plant" | "bed" | "statue" | "healer" }
+  | { item: "window" | "diploma" | "certificate" }
+  /** A poster on the back wall. A crooked one is hiding something. */
+  | { item: "poster"; crooked?: boolean }
+  | {
+      item:
+        | "bookshelf"
+        | "shelf"
+        | "pc"
+        | "tv"
+        | "plant"
+        | "bed"
+        | "statue"
+        | "healer"
+        /** A fossil on a display stand. */
+        | "fossil"
+        /** An arcade cabinet, two tiles tall. */
+        | "cabinet"
+        /** A slot machine, two tiles tall. */
+        | "slots";
+    }
   /** One machine per project; reading it opens that project's Pokédex page. */
   | { item: "machine"; project: string }
   /** One pedestal per job; reading it opens that job's summary. */
@@ -262,10 +352,17 @@ export interface RoomSpec {
   /** Tiles. The top two rows are the back wall; the exit mat is centred on the bottom row. */
   width: number;
   height: number;
-  floor: "wood" | "tile";
-  wall: "warm" | "cool";
+  floor: "wood" | "tile" | "carpet";
+  wall: "warm" | "cool" | "dark";
   furniture: Furniture[];
   npcs: NpcSpec[];
+  /**
+   * A hidden staircase up the back wall, at tile (x, 1), that appears once `secret` is unlocked
+   * and leads down to `to`. Until then it is plain wall.
+   */
+  stairs?: { secret: SecretId; x: number; to: SecretRoomId };
+  /** Where the exit mat leads, for a room reached by a staircase: back up to that room's stairs. */
+  leadsTo?: RoomId;
 }
 
 // ---------------------------------------------------------------- the battle

@@ -7,7 +7,8 @@
 import { parsePattern, type NoteEvent } from "./notes";
 
 export type Channel = "lead" | "harmony" | "bass" | "drums";
-export type TrackId = "title" | "town" | "indoor" | "battle" | "caught" | "evolved";
+export type TrackId =
+  "title" | "town" | "indoor" | "arcade" | "battle" | "caught" | "evolved" | "healed";
 
 export interface TrackSpec {
   bpm: number;
@@ -107,6 +108,45 @@ export const TRACKS: Readonly<Record<TrackId, TrackSpec>> = {
         "F2:8 C3:8",
         "G2:8 C3:8",
       ),
+    },
+  },
+
+  // The Game Corner: a bouncy little parlour tune with a wink of ragtime, G major.
+  arcade: {
+    bpm: 126,
+    loop: true,
+    channels: {
+      lead: bars(
+        "G5:2 B5:2 D6:2 B5:2 G5:3 A5:1 B5:4",
+        "E5:2 G5:2 B5:2 G5:2 E5:3 F#5:1 G5:4",
+        "A5:2 C6:2 E6:2 C6:2 A5:3 B5:1 C6:4",
+        "D6:2 C6:2 A5:2 F#5:2 D5:4 r:2 F#5:2",
+        "G5:2 B5:2 D6:2 G6:2 F#6:3 E6:1 D6:4",
+        "E6:2 G6:2 E6:2 C6:2 G5:4 C6:4",
+        "A5:2 C6:2 E6:4 D6:2 C6:2 A5:2 F#5:2",
+        "G5:2 D5:2 G5:2 B5:2 G5:6 r:2",
+      ),
+      harmony: bars(
+        stabs("B3+D4+G4"),
+        stabs("B3+E4+G4"),
+        stabs("C4+E4+A4"),
+        stabs("C4+D4+F#4"),
+        stabs("B3+D4+G4"),
+        stabs("C4+E4+G4"),
+        "r:2 C4+E4+A4:2 r:2 C4+E4+A4:2 r:2 C4+D4+F#4:2 r:2 C4+D4+F#4:2",
+        "r:2 B3+D4+G4:2 r:2 B3+D4+G4:2 r:2 B3+D4+G4:2 r:4",
+      ),
+      bass: bars(
+        bounce("G2", "G3", "D3"),
+        bounce("E2", "E3", "B2"),
+        bounce("A1", "A2", "E2"),
+        bounce("D2", "D3", "A2"),
+        bounce("G2", "G3", "D3"),
+        bounce("C2", "C3", "G2"),
+        "A1:2 A2:2 E2:2 A2:2 D2:2 D3:2 A2:2 D3:2",
+        "G2:2 G3:2 D3:2 G3:2 G2:4 r:4",
+      ),
+      drums: repeat("k:2 h:2 h:2 h:2 s:2 h:2 k:2 h:2", 8),
     },
   },
 
@@ -210,6 +250,16 @@ export const TRACKS: Readonly<Record<TrackId, TrackSpec>> = {
       harmony: "A4:4 C5:4 A4:4 C5:4 | A4+C5+F5:12 r:4",
       bass: "F2:4 C3:4 F2:4 C3:4 | F2:12 r:4",
       drums: "k:4 h:4 s:4 h:4 | k:12 r:4",
+    },
+  },
+  // A sparkle that climbs and settles, for the nurse.
+  healed: {
+    bpm: 138,
+    loop: false,
+    channels: {
+      lead: "C5:2 E5:2 G5:2 C6:2 E6:2 G6:4 E6:2 | C6:2 E6:2 G6:8 r:4",
+      harmony: "E4:4 G4:4 E4:4 G4:4 | E4+G4+C5:12 r:4",
+      bass: "C3:4 G2:4 C3:4 G2:4 | C3:12 r:4",
     },
   },
 };

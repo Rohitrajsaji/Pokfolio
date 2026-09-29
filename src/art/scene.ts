@@ -7,7 +7,7 @@ import { characterFrame, type CharacterLook, type Facing, type Step } from "./ch
 import { paintGrid, type Grid } from "./grid";
 import { hash2 } from "./noise";
 import type { PixelBuffer } from "./pixel-buffer";
-import { paintBush, paintJobBoard, paintLamp, paintTree } from "./props";
+import { paintBush, paintJobBoard, paintLamp, paintSnorlax, paintTree } from "./props";
 import {
   GRASS_PLAIN,
   GRASS_TUFTS,
@@ -16,14 +16,16 @@ import {
   TILE,
   YELLOW_FLOWER_FRAMES,
   paintPath,
+  paintWater,
   type PathNeighbours,
+  type WaterNeighbours,
 } from "./terrain";
 
 /** Something drawn on top of the ground, positioned in tiles. */
 export type Placed =
   | { kind: "building"; id: BuildingId; x: number; y: number }
   | { kind: "tile"; grid: Grid; x: number; y: number }
-  | { kind: "tree" | "bush" | "lamp" | "jobBoard"; x: number; y: number }
+  | { kind: "tree" | "bush" | "lamp" | "jobBoard" | "snorlax"; x: number; y: number }
   | {
       kind: "character";
       look: CharacterLook;
@@ -53,10 +55,16 @@ function neighbours(rows: readonly string[], x: number, y: number): PathNeighbou
   };
 }
 
+/** Which of a water tile's four neighbours are water too. */
+export function waterNeighbours(rows: readonly string[], x: number, y: number): WaterNeighbours {
+  const at = (dx: number, dy: number) => rows[y + dy]?.[x + dx] === "~";
+  return { n: at(0, -1), s: at(0, 1), e: at(1, 0), w: at(-1, 0) };
+}
+
 /**
  * Paints the ground layer of an ASCII map: . grass, = path, " tall grass,
- * * red flowers, + yellow flowers. Anything else is drawn as grass.
- * `frame` animates the flowers.
+ * * red flowers, + yellow flowers, ~ water. Anything else is drawn as grass.
+ * `frame` animates the flowers and the water.
  */
 export function paintGround(buf: PixelBuffer, rows: readonly string[], frame = 0): void {
   rows.forEach((row, ty) => {
@@ -67,7 +75,18 @@ export function paintGround(buf: PixelBuffer, rows: readonly string[], frame = 0
       else if (ch === '"') paintGrid(buf, TALL_GRASS_FRAMES[0], px, py);
       else if (ch === "*") paintGrid(buf, RED_FLOWER_FRAMES[frame % 2], px, py);
       else if (ch === "+") paintGrid(buf, YELLOW_FLOWER_FRAMES[frame % 2], px, py);
-      else paintGrid(buf, hash2(tx, ty, 1) < 0.3 ? GRASS_TUFTS : GRASS_PLAIN, px, py);
+      else if (ch === "~") {
+        // Grass underneath shows in the pond's rounded corners.
+        paintGrid(buf, GRASS_PLAIN, px, py);
+        paintWater(
+          buf,
+          px,
+          py,
+          waterNeighbours(rows, tx, ty),
+          (frame % 2) as 0 | 1,
+          tx * 7 + ty * 13,
+        );
+      } else paintGrid(buf, hash2(tx, ty, 1) < 0.3 ? GRASS_TUFTS : GRASS_PLAIN, px, py);
     });
   });
 }
@@ -86,7 +105,9 @@ export function treesFromGround(rows: readonly string[]): Placed[] {
 /** Pixel row where an object meets the ground; lower objects are drawn later. */
 export function groundLine(obj: Placed): number {
   if (obj.kind === "building") return (obj.y + BUILDINGS[obj.id].heightTiles) * TILE;
-  if (obj.kind === "tree" || obj.kind === "jobBoard") return (obj.y + 2) * TILE;
+  if (obj.kind === "tree" || obj.kind === "jobBoard" || obj.kind === "snorlax") {
+    return (obj.y + 2) * TILE;
+  }
   return (obj.y + 1) * TILE + (obj.kind === "character" ? 0.5 : 0);
 }
 
@@ -113,6 +134,8 @@ export function paintPlaced(buf: PixelBuffer, obj: Placed, lit: boolean, step: S
       return paintGrid(buf, obj.grid, px, py);
     case "tree":
       return paintTree(buf, px, py);
+    case "snorlax":
+      return paintSnorlax(buf, px, py);
     case "bush":
       return paintBush(buf, px, py);
     case "lamp":

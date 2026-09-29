@@ -1,7 +1,7 @@
 "use client";
 
 import { site, town } from "@content";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { BUILDINGS } from "@/art/buildings";
 import { paintBuffer } from "@/art/canvas";
 import { shrinkBuffer } from "@/art/scale";
@@ -10,6 +10,7 @@ import { useGame } from "../../state/store";
 import { fill } from "../../text";
 import { townPicture } from "../../world/picture";
 import type { MapId, Spot } from "../../world/runtime";
+import { Paged } from "../Paged";
 import { ScreenFrame } from "../ScreenFrame";
 
 interface Destination {
@@ -57,11 +58,15 @@ function destinations(): Destination[] {
   return places;
 }
 
-/** The map is the town shrunk 4×, then shown at 2 game pixels per map pixel: 8 game pixels a tile. */
-const MAP_SHRINK = 4;
-const TILE_GAME_PX = 8;
-/** The middle of a tile, in game pixels from the map's corner. */
-const at = (tile: number) => `calc(${tile * TILE_GAME_PX + TILE_GAME_PX / 2} * var(--px))`;
+/**
+ * The map is the town shrunk by a whole number, then shown at a whole number of game pixels per map
+ * pixel. A roomy view shrinks 4× and shows it at 2× (8 game pixels a tile, 192 wide); a 320-wide one
+ * shrinks 3× and shows it at 1× (128 wide), leaving the list room for whole names.
+ */
+const ROOMY_FROM = 400;
+export function mapSizing(viewWidth: number): { shrink: number; show: number } {
+  return viewWidth >= ROOMY_FROM ? { shrink: 4, show: 2 } : { shrink: 3, show: 1 };
+}
 
 export function TownMapScreen() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -69,12 +74,20 @@ export function TownMapScreen() {
   const [active, setActive] = useState<string | null>(places[0]?.id ?? null);
   const mapId = useGame((state) => state.mapId);
   const position = useGame((state) => state.position);
+  const viewWidth = useGame((state) => state.view?.width ?? 320);
+  const { shrink, show } = mapSizing(viewWidth);
   const width = town.ground[0].length;
   const height = town.ground.length;
+  const tileGamePx = (TILE / shrink) * show;
+  /** The middle of a tile, in whole game pixels from the map's corner. */
+  const at = (tile: number) =>
+    `round(calc(${(tile + 0.5) * tileGamePx} * var(--px)), calc(1 * var(--px)))`;
 
   useEffect(() => {
-    if (canvasRef.current) paintBuffer(canvasRef.current, shrinkBuffer(townPicture(), MAP_SHRINK));
-  }, []);
+    if (canvasRef.current) {
+      paintBuffer(canvasRef.current, shrinkBuffer(townPicture(), shrink, "common"));
+    }
+  }, [shrink]);
 
   const go = (place: Destination) => {
     const game = useGame.getState();
@@ -85,13 +98,22 @@ export function TownMapScreen() {
   const here = mapId === "town" ? position : places.find((p) => p.to === mapId);
 
   return (
-    <ScreenFrame title="TOWN MAP" accent="#3f8f5a">
-      <div className="town-map">
-        <div className="town-map-view">
+    <ScreenFrame title="TOWN MAP" accent="#3f8f5a" fit>
+      <div className="town-map town-map-fit">
+        <div
+          className="town-map-view"
+          style={
+            {
+              "--map-w": ((width * TILE) / shrink) * show,
+              "--map-h": ((height * TILE) / shrink) * show,
+            } as CSSProperties
+          }
+        >
           <canvas
+            key={shrink}
             ref={canvasRef}
-            width={(width * TILE) / MAP_SHRINK}
-            height={(height * TILE) / MAP_SHRINK}
+            width={Math.floor((width * TILE) / shrink)}
+            height={Math.floor((height * TILE) / shrink)}
             className="town-map-canvas"
             role="img"
             aria-label={`Map of ${site.townName}`}
@@ -111,25 +133,24 @@ export function TownMapScreen() {
             </span>
           )}
         </div>
-        <ul className="map-list" aria-label="Places">
-          {places.map((place) => (
-            <li key={place.id}>
-              <button
-                type="button"
-                data-nav
-                className="map-item"
-                onFocus={() => setActive(place.id)}
-                onMouseEnter={() => setActive(place.id)}
-                onClick={() => go(place)}
-              >
-                {place.label}
-                <span className="map-item-note">{place.note}</span>
-              </button>
-            </li>
+        <Paged
+          label="Places pages"
+          blocks={places.map((place) => (
+            <button
+              key={place.id}
+              type="button"
+              data-nav
+              className="map-item"
+              onFocus={() => setActive(place.id)}
+              onMouseEnter={() => setActive(place.id)}
+              onClick={() => go(place)}
+            >
+              {place.label}
+              <span className="map-item-note">{place.note}</span>
+            </button>
           ))}
-        </ul>
+        />
       </div>
-      <p className="screen-hint">Pick a place to go straight there.</p>
     </ScreenFrame>
   );
 }

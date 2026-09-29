@@ -2,14 +2,14 @@
 
 import { experience } from "@content";
 import type { Job } from "@content/types";
-import { useId, useState } from "react";
+import { useState } from "react";
 import { formatRange } from "@/lib/dates";
 import { partyIconUrl } from "@/pokeapi/sprites";
 import { Sprite } from "@/ui/Sprite";
 import { sound } from "../../audio/sound";
-import { useGame } from "../../state/store";
+import { Paged } from "../Paged";
 import { ScreenFrame } from "../ScreenFrame";
-import { MonSprite, SCREEN_LINKS, TypeBadges } from "./parts";
+import { MonSprite, TypeBadges } from "./parts";
 
 const KINDS: Readonly<Record<Job["kind"], string>> = {
   "full-time": "Full-time",
@@ -18,40 +18,42 @@ const KINDS: Readonly<Record<Job["kind"], string>> = {
 };
 
 function JobEntry({ job }: { job: Job }) {
-  const nameId = useId();
-  return (
-    <article className="entry" aria-labelledby={nameId}>
-      <div className="entry-top">
-        <div className="entry-portrait">
-          <MonSprite mon={job.mascot} />
-        </div>
-        <div>
-          <p className="entry-kicker">{job.mascot.name}</p>
-          <h3 id={nameId} className="entry-name">
-            {job.company.toUpperCase()}
-          </h3>
-          <p className="entry-kind">{job.role}</p>
-          <TypeBadges types={job.mascot.types} />
-        </div>
+  const blocks = [
+    <div key="top" className="entry-top">
+      <div className="entry-portrait">
+        <MonSprite mon={job.mascot} />
       </div>
-      <dl className="facts">
-        <dt>DATES</dt>
-        <dd>{formatRange(job.start, job.end)}</dd>
-        <dt>TYPE</dt>
-        <dd>{KINDS[job.kind]}</dd>
-        {job.location && (
-          <>
-            <dt>PLACE</dt>
-            <dd>{job.location}</dd>
-          </>
-        )}
-      </dl>
-      <h4 className="section-title">HIGHLIGHTS</h4>
-      <ul className="bullets readable">
-        {job.highlights.map((highlight) => (
-          <li key={highlight}>{highlight}</li>
-        ))}
-      </ul>
+      <div>
+        <p className="entry-kicker">{job.mascot.name}</p>
+        <h3 className="entry-name">{job.company.toUpperCase()}</h3>
+        <p className="entry-kind">{job.role}</p>
+        <TypeBadges types={job.mascot.types} />
+      </div>
+    </div>,
+    <dl key="facts" className="facts">
+      <dt>DATES</dt>
+      <dd>{formatRange(job.start, job.end)}</dd>
+      <dt>TYPE</dt>
+      <dd>{KINDS[job.kind]}</dd>
+      {job.location && (
+        <>
+          <dt>PLACE</dt>
+          <dd>{job.location}</dd>
+        </>
+      )}
+    </dl>,
+    ...job.highlights.map((highlight, i) => (
+      <div key={highlight}>
+        {i === 0 && <h4 className="section-title">HIGHLIGHTS</h4>}
+        <ul className="bullets readable">
+          <li>{highlight}</li>
+        </ul>
+      </div>
+    )),
+  ];
+  return (
+    <article className="entry entry-fit" aria-label={job.company}>
+      <Paged blocks={blocks} label={`${job.company} pages`} />
     </article>
   );
 }
@@ -69,6 +71,7 @@ export function PartyScreen({ job }: { job?: string }) {
     <ScreenFrame
       title="POKéMON"
       accent="#3f8f5a"
+      fit
       initial={start}
       onSelect={(item) => {
         if (!item.dataset.index) return;
@@ -77,7 +80,7 @@ export function PartyScreen({ job }: { job?: string }) {
         sound.cry(experience[selected].mascot.dex);
       }}
     >
-      <div className="browse">
+      <div className="browse browse-fit">
         <div className="browse-side">
           <ol className="browse-list" aria-label="Career">
             {experience.map((entry, i) => (
@@ -104,14 +107,6 @@ export function PartyScreen({ job }: { job?: string }) {
               </li>
             ))}
           </ol>
-          <button
-            type="button"
-            data-nav
-            className="screen-button browse-extra"
-            onClick={() => useGame.getState().pushScreen({ screen: "evolution" })}
-          >
-            {SCREEN_LINKS.evolution}
-          </button>
         </div>
         <JobEntry key={current.id} job={current} />
       </div>

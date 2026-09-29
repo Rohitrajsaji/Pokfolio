@@ -1,9 +1,10 @@
 "use client";
 
 import { experience, preferences, profile, projects, skills } from "@content";
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { formatRange } from "@/lib/dates";
 import type { Action } from "../../engine/input";
+import { Paged } from "../Paged";
 import { ScreenFrame } from "../ScreenFrame";
 
 const TABS = [
@@ -21,9 +22,10 @@ const KIND_LABELS = { "full-time": undefined, internship: "Internship", training
 /** "https://github.com/someone" → "github.com/someone" */
 const shortUrl = (url: string) => url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
 
-function Summary() {
-  return (
-    <>
+/** What each tab shows, as blocks: the pages break between them, never in the middle of one. */
+function summaryBlocks(): ReactNode[] {
+  return [
+    <div key="head">
       <p className="entry-name">{profile.name.toUpperCase()}</p>
       <p className="res-meta">
         {profile.role} · {profile.focus}
@@ -31,12 +33,14 @@ function Summary() {
       <p className="res-meta">
         {profile.location} · {profile.relocation}
       </p>
-      <h3 className="section-title">Summary</h3>
-      {profile.summary.map((paragraph) => (
-        <p key={paragraph} className="readable paragraph">
-          {paragraph}
-        </p>
-      ))}
+    </div>,
+    ...profile.summary.map((paragraph, i) => (
+      <div key={paragraph}>
+        {i === 0 && <h3 className="section-title">Summary</h3>}
+        <p className="readable">{paragraph}</p>
+      </div>
+    )),
+    <div key="contact">
       <h3 className="section-title">Contact</h3>
       <ul className="res-links">
         <li>
@@ -53,103 +57,97 @@ function Summary() {
           </a>
         </li>
       </ul>
+    </div>,
+    <div key="open">
       <h3 className="section-title">Open to</h3>
       <p className="readable">{preferences.intro}</p>
-      <ul className="chips">
-        {preferences.roles.map((role) => (
-          <li key={role} className="chip">
-            {role}
+    </div>,
+    <ul key="roles" className="chips">
+      {preferences.roles.map((role) => (
+        <li key={role} className="chip">
+          {role}
+        </li>
+      ))}
+    </ul>,
+  ];
+}
+
+function experienceBlocks(): ReactNode[] {
+  return experience.flatMap((job) => [
+    <div key={job.id}>
+      <h3 className="section-title">{job.company}</h3>
+      <p className="res-title">{job.role}</p>
+      <p className="res-meta">
+        {[formatRange(job.start, job.end), KIND_LABELS[job.kind], job.location]
+          .filter(Boolean)
+          .join(" · ")}
+      </p>
+    </div>,
+    ...job.highlights.map((highlight) => (
+      <ul key={job.id + highlight} className="bullets readable">
+        <li>{highlight}</li>
+      </ul>
+    )),
+  ]);
+}
+
+function projectBlocks(): ReactNode[] {
+  return projects.flatMap((project) => [
+    <div key={project.id}>
+      <h3 className="section-title">{project.name}</h3>
+      <p className="res-title">{project.tagline}</p>
+      {project.status && <p className="res-meta">{project.status}</p>}
+    </div>,
+    <p key={project.id + "summary"} className="readable res-body">
+      {project.summary}
+    </p>,
+    ...project.highlights.map((highlight, i) => (
+      <div key={project.id + highlight}>
+        {i === 0 && <p className="res-meta">{project.highlightsTitle}</p>}
+        <ul className="bullets readable">
+          <li>{highlight}</li>
+        </ul>
+      </div>
+    )),
+    <ul key={project.id + "tags"} className="chips" aria-label="Technologies and topics">
+      {project.tags.map((tag) => (
+        <li key={tag} className="chip">
+          {tag}
+        </li>
+      ))}
+    </ul>,
+  ]);
+}
+
+function skillBlocks(): ReactNode[] {
+  return skills.map((category) => (
+    <div key={category.id}>
+      <h3 className="section-title">{category.name}</h3>
+      <ul className="chips res-chips">
+        {category.skills.map((skill) => (
+          <li key={skill} className="chip">
+            {skill}
           </li>
         ))}
       </ul>
-    </>
-  );
+    </div>
+  ));
 }
 
-function Experience() {
-  return (
-    <>
-      {experience.map((job) => (
-        <article key={job.id} className="res-entry">
-          <h3 className="section-title">{job.company}</h3>
-          <p className="res-title">{job.role}</p>
-          <p className="res-meta">
-            {[formatRange(job.start, job.end), KIND_LABELS[job.kind], job.location]
-              .filter(Boolean)
-              .join(" · ")}
-          </p>
-          <ul className="bullets readable">
-            {job.highlights.map((highlight) => (
-              <li key={highlight}>{highlight}</li>
-            ))}
-          </ul>
-        </article>
-      ))}
-    </>
-  );
-}
-
-function Projects() {
-  return (
-    <>
-      {projects.map((project) => (
-        <article key={project.id} className="res-entry">
-          <h3 className="section-title">{project.name}</h3>
-          <p className="res-title">{project.tagline}</p>
-          {project.status && <p className="res-meta">{project.status}</p>}
-          <p className="readable res-body">{project.summary}</p>
-          <p className="res-meta">{project.highlightsTitle}</p>
-          <ul className="bullets readable">
-            {project.highlights.map((highlight) => (
-              <li key={highlight}>{highlight}</li>
-            ))}
-          </ul>
-          <ul className="chips" aria-label="Technologies and topics">
-            {project.tags.map((tag) => (
-              <li key={tag} className="chip">
-                {tag}
-              </li>
-            ))}
-          </ul>
-        </article>
-      ))}
-    </>
-  );
-}
-
-function Skills() {
-  return (
-    <>
-      {skills.map((category) => (
-        <article key={category.id} className="res-entry">
-          <h3 className="section-title">{category.name}</h3>
-          <ul className="chips res-chips">
-            {category.skills.map((skill) => (
-              <li key={skill} className="chip">
-                {skill}
-              </li>
-            ))}
-          </ul>
-        </article>
-      ))}
-    </>
-  );
-}
-
-function Education() {
-  return (
-    <>
-      {profile.education.map((ed) => (
-        <article key={ed.degree + ed.institution} className="res-entry">
-          <h3 className="section-title">{formatRange(ed.start, ed.end)}</h3>
-          <p className="res-title">
-            {ed.degree}, {ed.field}
-          </p>
-          <p className="res-meta">
-            {ed.institution} · {ed.university}
-          </p>
-        </article>
-      ))}
+function educationBlocks(): ReactNode[] {
+  return [
+    ...profile.education.map((ed) => (
+      <div key={ed.degree + ed.institution}>
+        <h3 className="section-title">{formatRange(ed.start, ed.end)}</h3>
+        <p className="res-title">
+          {ed.degree}, {ed.field}
+        </p>
+        <p className="res-meta">
+          {ed.institution} · {ed.university}
+        </p>
+      </div>
+    )),
+    <div key="certs">
       <h3 className="section-title">Certifications</h3>
       <ul className="bullets readable">
         {profile.certifications.map((cert) => (
@@ -158,6 +156,8 @@ function Education() {
           </li>
         ))}
       </ul>
+    </div>,
+    <div key="languages">
       <h3 className="section-title">Languages</h3>
       <ul className="bullets readable">
         {profile.languages.map((language) => (
@@ -166,16 +166,16 @@ function Education() {
           </li>
         ))}
       </ul>
-    </>
-  );
+    </div>,
+  ];
 }
 
-const PANELS: Record<TabId, () => React.JSX.Element> = {
-  summary: Summary,
-  experience: Experience,
-  projects: Projects,
-  skills: Skills,
-  education: Education,
+const PANELS: Record<TabId, () => ReactNode[]> = {
+  summary: summaryBlocks,
+  experience: experienceBlocks,
+  projects: projectBlocks,
+  skills: skillBlocks,
+  education: educationBlocks,
 };
 
 /**
@@ -186,14 +186,20 @@ const PANELS: Record<TabId, () => React.JSX.Element> = {
 export function ResumeScreen() {
   const [tab, setTab] = useState<TabId>("summary");
   const tabs = useRef<HTMLDivElement>(null);
-  const Panel = PANELS[tab];
-
-  const scroller = () => tabs.current?.closest<HTMLElement>(".px-scroll-body") ?? null;
 
   const onKey = (action: Action) => {
     const row = tabs.current;
     if (!row) return false;
+    const frame = row.closest<HTMLElement>(".screen-frame");
+    const bar = frame?.querySelector<HTMLElement>(".paged-bar");
+    const inBar = Boolean(bar && bar.contains(document.activeElement));
+    const buttons = bar ? [...bar.querySelectorAll<HTMLElement>("button")] : [];
     if (action === "left" || action === "right") {
+      // In the page bar, left and right turn the page; on the tabs they move along them.
+      if (inBar) {
+        buttons[action === "left" ? 0 : buttons.length - 1]?.click();
+        return true;
+      }
       const items = [...row.querySelectorAll<HTMLElement>("[data-nav]")];
       const at = items.findIndex((item) => item.hasAttribute("data-current"));
       const step = action === "left" ? -1 : 1;
@@ -201,30 +207,26 @@ export function ResumeScreen() {
       return true;
     }
     if (action === "up" || action === "down") {
-      const el = scroller();
-      if (el) {
-        const unit = Number.parseFloat(getComputedStyle(el).getPropertyValue("--px")) || 1;
-        el.scrollBy({ top: (action === "up" ? -36 : 36) * unit });
+      // Up and down go between the tabs and the page bar (when there is one).
+      if (inBar) {
+        row.querySelector<HTMLElement>('[aria-selected="true"]')?.focus({ preventScroll: true });
+      } else if (buttons.length > 0) {
+        buttons[buttons.length - 1].focus({ preventScroll: true });
       }
       return true;
     }
     return false;
   };
 
-  const show = (id: TabId) => {
-    setTab(id);
-    const el = scroller();
-    if (el) el.scrollTop = 0;
-  };
-
   return (
     <ScreenFrame
       title="RÉSUMÉ"
       accent="#2f6fb0"
+      fit
       onKey={onKey}
       onSelect={(item) => {
         const id = item.dataset.tab as TabId | undefined;
-        if (id && id !== tab) show(id);
+        if (id && id !== tab) setTab(id);
       }}
     >
       <div ref={tabs} className="res-tabs" role="tablist" aria-label="Résumé sections">
@@ -237,7 +239,7 @@ export function ResumeScreen() {
             data-nav
             data-tab={id}
             className="tab"
-            onClick={() => show(id)}
+            onClick={() => setTab(id)}
           >
             {label}
           </button>
@@ -246,8 +248,8 @@ export function ResumeScreen() {
           PRINT
         </button>
       </div>
-      <div className="res-panel" role="tabpanel">
-        <Panel />
+      <div className="res-panel res-fit" role="tabpanel">
+        <Paged key={tab} blocks={PANELS[tab]()} label="Résumé pages" />
       </div>
     </ScreenFrame>
   );

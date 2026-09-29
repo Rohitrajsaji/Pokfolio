@@ -1,6 +1,6 @@
 "use client";
 
-import { site } from "@content";
+import { rooms, secretRooms, site, town } from "@content";
 import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from "react";
 import { directMusic } from "./audio/director";
 import { watchDensity } from "./density";
@@ -15,10 +15,19 @@ import { useGame } from "./state/store";
 import { ContentScreens } from "./ui/ContentScreens";
 import { IntroScene } from "./ui/IntroScene";
 import { Overlays } from "./ui/Overlays";
+import { PaletteFilters } from "./ui/PaletteFilters";
 import { TitleScreen } from "./ui/TitleScreen";
 import { TouchControls } from "./ui/TouchControls";
 import { buildWorld } from "./world/compile";
 import { computeView, layoutFor, sameView, type View } from "./view";
+
+/**
+ * The title's Pokémon need a view at least this tall (buttons, logo, a 60-pixel row for them and the
+ * menu, credits: 154 game pixels) and this wide (menu with Pikachu on one side and Rotom on the other);
+ * with less, they're left out so nothing has to overlap.
+ */
+const TITLE_ROW_HEIGHT = 154;
+const TITLE_ROW_WIDTH = 288;
 
 /**
  * The playable town: canvas, the title screen and intro, everything drawn over the
@@ -29,8 +38,26 @@ export function Game() {
   const engineRef = useRef<Engine | null>(null);
   const regionRef = useRef<HTMLDivElement>(null);
   const stage = useGame((state) => state.stage);
+  const palette = useGame((state) => state.cosmetics.palette);
   const [view, setView] = useState<View | null>(null);
   const viewRef = useRef<View | null>(null);
+  const [fontReady, setFontReady] = useState(false);
+
+  // Nothing shows until the window has been measured and the pixel font is in: what the server
+  // sent has no size and a stand-in font, and showing it would make the page jump as both arrive.
+  useEffect(() => {
+    let alive = true;
+    const show = () => {
+      if (alive) setFontReady(true);
+    };
+    const fallback = window.setTimeout(show, 1500);
+    if (document.fonts?.ready) document.fonts.ready.then(show, show);
+    else show();
+    return () => {
+      alive = false;
+      window.clearTimeout(fallback);
+    };
+  }, []);
 
   // Fit the game to its space: whole window, less the touch pad on a phone.
   useLayoutEffect(() => {
@@ -61,7 +88,10 @@ export function Game() {
 
   useEffect(() => {
     viewRef.current = view;
-    if (view) engineRef.current?.resize(view.width, view.height);
+    if (!view) return;
+    engineRef.current?.resize(view.width, view.height);
+    // Screens that lay themselves out by how much room there is (the battle) read it from here.
+    useGame.getState().setView({ width: view.width, height: view.height });
   }, [view]);
 
   useEffect(() => {
@@ -71,22 +101,27 @@ export function Game() {
     const stopMusic = directMusic(useGame, sound);
     const override = parseTimeOverride(new URLSearchParams(window.location.search).get("time"));
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const engine = new Engine(canvas, buildWorld(), input, {
-      onEncounter: () => {
-        const game = useGame.getState();
-        if (game.caught) return false;
-        game.startBattle();
-        return true;
+    const engine = new Engine(
+      canvas,
+      buildWorld(town, rooms, secretRooms, useGame.getState().secrets),
+      input,
+      {
+        onEncounter: () => {
+          const game = useGame.getState();
+          if (game.caught) return false;
+          game.startBattle();
+          return true;
+        },
+        // Nothing moves on the title screen or in the intro.
+        busy: () => useGame.getState().stage !== "play",
+        sfx: (name) => sound.sfx(name),
+        reducedMotion: () => motion.matches,
+        timeOfDay: () => {
+          const setting = useGame.getState().settings.time;
+          return override ?? (setting === "auto" ? timeOfDay(new Date()) : setting);
+        },
       },
-      // Nothing moves on the title screen or in the intro.
-      busy: () => useGame.getState().stage !== "play",
-      sfx: (name) => sound.sfx(name),
-      reducedMotion: () => motion.matches,
-      timeOfDay: () => {
-        const setting = useGame.getState().settings.time;
-        return override ?? (setting === "auto" ? timeOfDay(new Date()) : setting);
-      },
-    });
+    );
     engineRef.current = engine;
     if (viewRef.current) engine.resize(viewRef.current.width, viewRef.current.height);
     useGame.setState({ travel: (to, spot) => engine.warpTo(to, spot) });
@@ -111,8 +146,17 @@ export function Game() {
     <div
       className="game"
       data-layout={view ? layoutFor(view) : undefined}
+      data-ready={view && fontReady ? "" : undefined}
+      data-palette={palette === "normal" ? undefined : palette}
       data-short={view && view.height < 160 ? "" : undefined}
-      style={view ? ({ "--px": `${view.unit}px`, "--z": view.unit } as CSSProperties) : undefined}
+      data-tight={
+        view && (view.height < TITLE_ROW_HEIGHT || view.width < TITLE_ROW_WIDTH) ? "" : undefined
+      }
+      style={
+        view
+          ? ({ "--px": `${view.unit}px`, "--z": view.unit, "--vw": view.width } as CSSProperties)
+          : undefined
+      }
     >
       <div ref={regionRef} className="game-region">
         <div
@@ -137,6 +181,7 @@ export function Game() {
         </div>
       </div>
       <TouchControls />
+      <PaletteFilters />
     </div>
   );
 }

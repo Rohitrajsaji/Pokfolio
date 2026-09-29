@@ -1,52 +1,31 @@
 "use client";
 
 import { preferences, profile } from "@content";
-import type { CSSProperties } from "react";
-import { useGame } from "../../state/store";
+import { Paged } from "../Paged";
 import { ScreenFrame } from "../ScreenFrame";
-import { SCREEN_LINKS } from "./parts";
 
-/** A few tilts, so the pinned notes don't look machine-placed. */
-const TILTS = [-1.5, 1, -0.5, 1.5, -1, 0.5];
-
-/** The JOB BOARD: the roles Rohit is open to. */
+/** The JOB BOARD: the roles Rohit is open to, pinned up a page at a time. */
 export function JobsScreen() {
   return (
-    <ScreenFrame title="JOB BOARD" accent="#8a6236">
-      <div className="board">
-        <p className="board-intro">{preferences.intro}</p>
-        <ul className="board-notes">
-          {preferences.roles.map((role, index) => (
-            <li
-              key={role}
-              className="board-note"
-              style={{ "--tilt": `${TILTS[index % TILTS.length]}deg` } as CSSProperties}
-            >
-              {role}
-            </li>
-          ))}
-        </ul>
-        <p className="board-footer">
-          {profile.location} · {profile.relocation}
-        </p>
-      </div>
-      <div className="screen-actions">
-        <button
-          type="button"
-          data-nav
-          className="screen-button"
-          onClick={() => useGame.getState().pushScreen({ screen: "contact" })}
-        >
-          {SCREEN_LINKS.contact}
-        </button>
-        <button
-          type="button"
-          data-nav
-          className="screen-button"
-          onClick={() => useGame.getState().pushScreen({ screen: "resume" })}
-        >
-          {SCREEN_LINKS.resume}
-        </button>
+    <ScreenFrame title="JOB BOARD" accent="#8a6236" fit>
+      <div className="board fill">
+        <Paged
+          wrap
+          label="Job board pages"
+          blocks={[
+            <p key="intro" className="board-intro wide">
+              {preferences.intro}
+            </p>,
+            ...preferences.roles.map((role) => (
+              <div key={role} className="board-note">
+                {role}
+              </div>
+            )),
+            <p key="footer" className="board-footer wide">
+              {profile.location} · {profile.relocation}
+            </p>,
+          ]}
+        />
       </div>
     </ScreenFrame>
   );

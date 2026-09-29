@@ -4,7 +4,7 @@
  */
 import type { GameState } from "../state/store";
 
-export type MusicId = "title" | "town" | "indoor" | "battle";
+export type MusicId = "title" | "town" | "indoor" | "arcade" | "battle";
 
 export interface MusicPlayer {
   setEnabled(enabled: boolean): void;
@@ -18,11 +18,12 @@ interface GameStore {
 
 /**
  * The title theme until the adventure begins, then battle music in a battle, the
- * town theme outdoors, and the indoor theme in buildings.
+ * town theme outdoors, the indoor theme in buildings, and the Game Corner's own tune downstairs.
  */
 export function musicFor(state: Pick<GameState, "stage" | "mapId" | "overlay">): MusicId {
   if (state.stage !== "play") return "title";
   if (state.overlay?.kind === "battle") return "battle";
+  if (state.mapId === "arcade") return "arcade";
   return state.mapId === "town" ? "town" : "indoor";
 }
 

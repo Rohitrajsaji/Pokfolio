@@ -1,4 +1,4 @@
-import type { RoomId, RoomSpec, TownSpec } from "./types";
+import type { Interaction, RoomId, RoomSpec, SecretRoomId, TownSpec } from "./types";
 
 /**
  * The town and the rooms inside its buildings. Coordinates are tiles from
@@ -25,8 +25,8 @@ export const town: TownSpec = {
     "TT......==............TT",
     "TT......==............TT",
     "TT...==============...TT",
-    'TT""""""==."""""""""""TT',
-    'TT""""""==."""""""""""TT',
+    'TT""""""==."""""~~~~~~TT',
+    'TT""""""==."""""~~~~~~TT',
     "TTTTTTTT==TTTTTTTTTTTTTT",
     "TTTTTTTT==TTTTTTTTTTTTTT",
   ],
@@ -92,9 +92,33 @@ export const town: TownSpec = {
     { prop: "bush", x: 15, y: 12 },
     { prop: "bush", x: 16, y: 12 },
     { prop: "rock", x: 21, y: 11 },
-    { prop: "fence", x: 19, y: 13 },
-    { prop: "fence", x: 20, y: 13 },
-    { prop: "fence", x: 21, y: 13 },
+    {
+      // Asleep across the only road out of town, so the real world can wait.
+      prop: "snorlax",
+      x: 8,
+      y: 16,
+      read: {
+        lines: ["A huge POKéMON is sound asleep across the road.", "Zzz... Zzz..."],
+        effect: { cry: 143 },
+        visits: [
+          {
+            from: 2,
+            lines: [
+              "It's still fast asleep, and it isn't going anywhere.",
+              "The road only leads back to the real world anyway.",
+              "Explore {town} first! The résumé is in the START menu.",
+            ],
+          },
+          {
+            from: 5,
+            lines: [
+              "Its belly rises and falls. It must be dreaming of a very long lunch.",
+              "You don't have a POKé FLUTE. You have a résumé. That's even better!",
+            ],
+          },
+        ],
+      },
+    },
   ],
   npcs: [
     {
@@ -107,6 +131,29 @@ export const town: TownSpec = {
         lines: [
           "Back in my day, big companies ran everything on AS400 green screens.",
           "Now {name} moves those old apps to Next.js, with AI agents doing the heavy lifting!",
+        ],
+        // Keep coming back and he needs his coffee, then he's had it and lets a secret slip.
+        visits: [
+          {
+            from: 3,
+            lines: [
+              "Hm? Oh, it's you again. Sorry, I can't think straight before my coffee.",
+              "Come back later. Maybe it will have kicked in by then!",
+            ],
+          },
+          {
+            from: 4,
+            lines: ["Still no coffee...", "I can smell it brewing, though. Any minute now!"],
+          },
+          {
+            from: 6,
+            lines: [
+              "Ahh, that was a good cup of coffee! I feel ten years younger!",
+              "You keep coming back, so here's a secret from an old-timer.",
+              "Walk the whole shore of the pond in one go, without stopping. Something strange washes up there.",
+              "Kids call it a bug. I call it a feature!",
+            ],
+          },
         ],
       },
     },
@@ -140,9 +187,19 @@ export const town: TownSpec = {
     },
   ],
   start: { x: 9, y: 15, facing: "up" },
-  edge: [
-    "The road leads back to the real world.",
-    "Explore {town} first! The résumé is in the START menu.",
+  routes: [
+    {
+      // The pond's north shore, walked from end to end without a step anywhere else.
+      id: "shore",
+      tiles: [14, 15, 16, 17, 18, 19, 20, 21].map((x) => ({ x, y: 13 })),
+      effect: {
+        cameo: "missingno",
+        after: [
+          "Whoa! The whole screen scrambled for a second!",
+          "A wild ???? appeared... and then it was gone. Was that a bug, or a feature?",
+        ],
+      },
+    },
   ],
 };
 
@@ -162,7 +219,30 @@ export const rooms: Record<RoomId, RoomSpec> = {
         item: "tv",
         x: 1,
         y: 2,
-        read: { lines: ["{name}'s TRAINER CARD is on TV!"], then: { screen: "card" } },
+        read: {
+          lines: ["{name}'s TRAINER CARD is on TV!"],
+          then: { screen: "card" },
+          // The third time, something living in the set makes an appearance.
+          visits: [
+            {
+              from: 3,
+              lines: ["The TV is full of static... and something inside it is moving!"],
+              effect: {
+                cameo: "rotom",
+                cry: 479,
+                after: [
+                  "A wild ROTOM hopped out of the TV for a moment, then zipped right back in!",
+                  "The TV is back to normal. {name}'s TRAINER CARD is on again.",
+                ],
+              },
+            },
+            {
+              from: 4,
+              lines: ["{name}'s TRAINER CARD is on TV!"],
+              then: { screen: "card" },
+            },
+          ],
+        },
       },
       {
         item: "bookshelf",
@@ -206,13 +286,23 @@ export const rooms: Record<RoomId, RoomSpec> = {
     height: 9,
     floor: "tile",
     wall: "cool",
+    stairs: { secret: "arcade", x: 6, to: "arcade" },
     furniture: [
       { item: "window", x: 1, y: 0 },
       {
         item: "poster",
+        crooked: true,
         x: 6,
         y: 0,
-        read: { lines: ["A poster: AGENTS AT WORK. Please do not unplug the lab."] },
+        read: {
+          lines: [
+            "A poster: AGENTS AT WORK. Please do not unplug the lab.",
+            "Hm? It's hanging a little crooked.",
+            "There's a switch behind it!",
+            "Click! The wall slides open, and a staircase leads down!",
+          ],
+          effect: { unlock: "arcade" },
+        },
       },
       { item: "window", x: 10, y: 0 },
       {
@@ -235,8 +325,36 @@ export const rooms: Record<RoomId, RoomSpec> = {
         item: "table",
         x: 4,
         y: 5,
-        width: 2,
+        width: 1,
         read: { lines: ["Notes on knowledge graphs and reciprocal-rank fusion."] },
+      },
+      {
+        item: "fossil",
+        x: 5,
+        y: 5,
+        read: {
+          lines: [
+            "A spiral fossil sits on a little stand. The plaque reads: HELIX FOSSIL.",
+            "It seems to be staring right at you.",
+          ],
+          // Everyone here consults it before a big decision.
+          visits: [
+            {
+              from: 2,
+              lines: [
+                "You ask the HELIX FOSSIL whether you should hire {name}.",
+                "It stays silent, which you decide means YES.",
+              ],
+            },
+            {
+              from: 3,
+              lines: [
+                "You bow to the HELIX FOSSIL out of respect.",
+                "The lab feels a little wiser.",
+              ],
+            },
+          ],
+        },
       },
       { item: "plant", x: 0, y: 7 },
       { item: "plant", x: 11, y: 7 },
@@ -262,6 +380,7 @@ export const rooms: Record<RoomId, RoomSpec> = {
           lines: [
             "Each machine holds one of PROF. {name}'s projects.",
             "Stand in front of one and press A to read its data!",
+            "Oh, and ignore that crooked poster. It's been like that since the last inspection.",
           ],
         },
       },
@@ -307,6 +426,8 @@ export const rooms: Record<RoomId, RoomSpec> = {
             question: "Would you like {name}'s contact details?",
             no: ["We hope to see you again!"],
           },
+          // The nurse's little tune, as she looks them up.
+          effect: { jingle: "healed" },
           then: { screen: "contact" },
         },
       },
@@ -406,6 +527,69 @@ export const rooms: Record<RoomId, RoomSpec> = {
           },
           then: { screen: "evolution" },
         },
+      },
+    ],
+  },
+};
+
+/** A VOLTORB FLIP cabinet: all three in the Game Corner are the same machine. */
+const voltorbCabinet: Interaction = {
+  lines: ["A VOLTORB FLIP cabinet. Its screen glows invitingly."],
+  confirm: { question: "Play VOLTORB FLIP?", no: ["Maybe later."] },
+  then: { screen: "voltorb" },
+};
+
+/** A slot machine that only ever pays out one thing. */
+const slotMachine: Interaction = {
+  lines: ["A slot machine. Every reel says HIRE ME.", "It doesn't take coins, though."],
+};
+
+/** Rooms no door leads to. The Game Corner is down the Lab's hidden staircase. */
+export const secretRooms: Record<SecretRoomId, RoomSpec> = {
+  arcade: {
+    name: "GAME CORNER",
+    width: 12,
+    height: 9,
+    floor: "carpet",
+    wall: "dark",
+    leadsTo: "lab",
+    furniture: [
+      { item: "cabinet", x: 2, y: 2, read: voltorbCabinet },
+      { item: "cabinet", x: 4, y: 2, read: voltorbCabinet },
+      { item: "cabinet", x: 6, y: 2, read: voltorbCabinet },
+      { item: "slots", x: 9, y: 2, read: slotMachine },
+      { item: "slots", x: 10, y: 2, read: slotMachine },
+      { item: "counter", x: 8, y: 5, width: 3 },
+      { item: "rug", x: 3, y: 5, width: 4, height: 2 },
+      { item: "plant", x: 0, y: 7 },
+      { item: "plant", x: 11, y: 7 },
+    ],
+    npcs: [
+      {
+        id: "clerk",
+        name: "CLERK",
+        look: "clerk",
+        x: 9,
+        y: 4,
+        facing: "down",
+        talk: {
+          lines: [
+            "Welcome to the GAME CORNER!",
+            "Not many people find their way down here.",
+            "Clear levels of VOLTORB FLIP and I'll hand out prizes!",
+          ],
+          confirm: { question: "Take a look at the prizes?", no: ["Come back any time!"] },
+          then: { screen: "prizes" },
+        },
+      },
+      {
+        id: "gambler",
+        look: "youngster",
+        x: 1,
+        y: 4,
+        facing: "right",
+        wander: 1,
+        talk: { lines: ["Shh! I'm on a streak!"] },
       },
     ],
   },

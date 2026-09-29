@@ -20,22 +20,38 @@ describe("screens", () => {
     expect(overlay()).toBeNull();
   });
 
-  it("opened from another screen go back to it, then to where that one came from", () => {
+  it("never stack: a screen opened from another takes its place, and closes back to where that one came from", () => {
     const { openScreen, pushScreen, closeOverlay } = useGame.getState();
     openScreen({ screen: "party" }, true);
-    const party = overlay();
     pushScreen({ screen: "evolution" });
-    expect(overlay()).toMatchObject({ request: { screen: "evolution" }, back: party });
-    closeOverlay();
-    expect(overlay()).toBe(party);
+    expect(overlay()).toMatchObject({ request: { screen: "evolution" }, back: { kind: "menu" } });
     closeOverlay();
     expect(overlay()).toEqual({ kind: "menu" });
   });
 
-  it("get a fresh id each time, so reopening one starts it over", () => {
-    const { openScreen } = useGame.getState();
+  it("open only once: opening the screen that is already open does nothing", () => {
+    const { openScreen, pushScreen } = useGame.getState();
+    openScreen({ screen: "jobs" });
+    const first = overlay();
+    for (let i = 0; i < 5; i++) {
+      openScreen({ screen: "jobs" });
+      pushScreen({ screen: "jobs" });
+    }
+    expect(overlay()).toBe(first);
+    // A different page of the same screen is a different screen, though.
+    openScreen({ screen: "dex", project: "mnemo" });
+    const dex = overlay();
+    openScreen({ screen: "dex", project: "mnemo" });
+    expect(overlay()).toBe(dex);
+    openScreen({ screen: "dex", project: "sovereign" });
+    expect(overlay()).not.toBe(dex);
+  });
+
+  it("get a fresh id when reopened after being closed, so it starts over", () => {
+    const { openScreen, closeOverlay } = useGame.getState();
     openScreen({ screen: "card" });
     const first = overlay();
+    closeOverlay();
     openScreen({ screen: "card" });
     const second = overlay();
     expect(first?.kind === "screen" && second?.kind === "screen").toBe(true);

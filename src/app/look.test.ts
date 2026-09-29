@@ -100,7 +100,7 @@ describe("the pixel look", () => {
     // pad, whose pixel comes from the window (the game's own pixel depends on room left by the pad).
     const withoutGuess = css
       .replace(/--px: max\(1px, calc\(100vw \/ 320\)\);/, "")
-      .replace(/--pp: max\([^;]*;/g, "");
+      .replace(/--pp(-w)?: (max|calc)\([^;]*;/g, "");
     expect(withoutGuess).not.toMatch(/-?[\d.]+(vw|vh|dvh|dvw|cqw|cqh|em|rem)\b/);
   });
 });

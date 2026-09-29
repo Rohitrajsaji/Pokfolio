@@ -12,9 +12,11 @@ import { HelpScreen } from "./screens/HelpScreen";
 import { JobsScreen } from "./screens/JobsScreen";
 import { OptionsScreen } from "./screens/OptionsScreen";
 import { PartyScreen } from "./screens/PartyScreen";
+import { PrizesScreen } from "./screens/PrizesScreen";
 import { ResumeScreen } from "./screens/ResumeScreen";
 import { TownMapScreen } from "./screens/TownMapScreen";
 import { TrainerCardScreen } from "./screens/TrainerCardScreen";
+import { VoltorbFlipScreen } from "./screens/VoltorbFlipScreen";
 
 function Screen({ request }: { request: ScreenRequest }) {
   switch (request.screen) {
@@ -44,6 +46,10 @@ function Screen({ request }: { request: ScreenRequest }) {
       return <HelpScreen />;
     case "credits":
       return <CreditsScreen />;
+    case "voltorb":
+      return <VoltorbFlipScreen />;
+    case "prizes":
+      return <PrizesScreen />;
   }
 }
 

@@ -15,6 +15,9 @@ export interface MenuNavigationOptions {
   onKey?: (action: Action) => boolean | void;
 }
 
+/** Everything the cursor can land on: not the out-of-sight copies a paged screen measures with. */
+const NAV = "[data-nav]:not([data-measure] *)";
+
 /** Moves the cursor to `item`, scrolling it into view unless `scroll` is false. */
 function select(
   root: HTMLElement,
@@ -53,7 +56,7 @@ export function useMenuNavigation(
   useEffect(() => {
     const root = ref.current;
     if (!root) return;
-    const items = root.querySelectorAll<HTMLElement>("[data-nav]");
+    const items = root.querySelectorAll<HTMLElement>(NAV);
     // A screen opens at its top, even when the first thing to pick is further down.
     if (items.length > 0) {
       select(root, items[Math.min(start.current, items.length - 1)], latestOnSelect.current, false);
@@ -82,7 +85,7 @@ export function useMenuNavigation(
     if (action === "b" || action === "escape" || action === "start") return onBack();
     const root = ref.current;
     if (!root) return;
-    const items = [...root.querySelectorAll<HTMLElement>("[data-nav]")];
+    const items = [...root.querySelectorAll<HTMLElement>(NAV)];
     if (items.length === 0) return;
     const at = items.findIndex((item) => item.hasAttribute("data-current"));
     if (action === "a") return (items[at] ?? items[0]).click();

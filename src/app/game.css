@@ -53,6 +53,12 @@
   -webkit-user-select: none;
 }
 
+/* Until it's measured and its font has arrived (see Game.tsx), the game stays black rather than jump into place. Transparent, not hidden, so the menu can still take the keyboard's focus. */
+.game:not([data-ready]) > * {
+  opacity: 0;
+  pointer-events: none;
+}
+
 :where(.game) :is(h1, h2, h3, h4, strong) {
   margin: 0;
   font-size: inherit;
@@ -217,6 +223,17 @@
 .game .screen-close::before,
 .game .ask-input::before {
   display: none;
+}
+
+/* Tabs and settings show the cursor by their fill, not an arrow, so their labels sit in the middle of them. */
+.game .tab::before,
+.game .option-choice::before {
+  display: none;
+}
+
+.tab,
+.option-choice {
+  justify-content: center;
 }
 
 /* Under the cursor: the pick lights up. */
@@ -514,6 +531,88 @@
   }
 }
 
+/* A screen laid out to fill its frame exactly, with nothing to scroll: what's long is split into pages (see Paged). */
+.screen-fit {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding: calc(6 * var(--px)) calc(8 * var(--px)) calc(4 * var(--px));
+  overflow: hidden;
+}
+
+.paged {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.paged-page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: calc(4 * var(--px));
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* The same blocks laid out in full, unseen, to find out where the pages break. */
+.paged-measure {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  flex: none;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.paged-wrap {
+  flex-flow: row wrap;
+  align-content: flex-start;
+}
+
+.paged-wrap > .paged-block {
+  flex: 1 1 calc(130 * var(--px));
+  min-width: 0;
+}
+
+/* A block that takes a whole row of a wrapping page. */
+.paged-wrap > .paged-block:has(> .wide) {
+  flex-basis: 100%;
+}
+
+.fill {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.paged-block > :first-child {
+  margin-top: 0;
+}
+
+.paged-block > :first-child > .section-title:first-child {
+  margin-top: 0;
+}
+
+.paged-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(5 * var(--px));
+  height: calc(16 * var(--px));
+  padding-top: calc(2 * var(--px));
+}
+
+.paged-count {
+  color: var(--ink-soft);
+}
+
 .screen-hint {
   margin-top: calc(8 * var(--px));
   color: var(--ink-soft);
@@ -537,12 +636,17 @@
   margin-top: calc(6 * var(--px));
 }
 
+/* A screen's first heading needs no gap above it: the screen's own padding is already there. */
 .section-title {
   margin: calc(8 * var(--px)) 0 calc(4 * var(--px));
   padding-bottom: calc(2 * var(--px));
   border-bottom: calc(1 * var(--px)) solid var(--hi);
   color: var(--ink-soft);
   text-transform: uppercase;
+}
+
+.px-scroll-content > .section-title:first-child {
+  margin-top: 0;
 }
 
 .bullets {
@@ -652,6 +756,42 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+/* The list and the entry side by side, both filling the frame's height. */
+.browse.browse-fit {
+  flex: 1;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.game[data-layout="narrow"] .browse.browse-fit {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.browse-fit > * {
+  min-height: 0;
+}
+
+.entry-fit {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Beside the list there is little width: the name sits next to the picture instead of under it. */
+.game:not([data-layout="narrow"]) .browse.browse-fit {
+  grid-template-columns: calc(104 * var(--px)) minmax(0, 1fr);
+  gap: calc(8 * var(--px));
+}
+
+.entry-fit .entry-top {
+  flex-wrap: nowrap;
+  margin-bottom: 0;
+}
+
+.entry-fit .entry-top > :last-child {
+  flex: 1 1 0;
+}
+
 .browse-list {
   display: flex;
   flex-direction: column;
@@ -701,9 +841,16 @@
 
 .entry-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
-  gap: calc(8 * var(--px));
+  gap: calc(6 * var(--px)) calc(8 * var(--px));
   margin-bottom: calc(8 * var(--px));
+}
+
+/* The name and details take the rest of the row beside the picture, or go under it if that leaves under 96 pixels. */
+.entry-top > :last-child {
+  flex: 1 1 calc(96 * var(--px));
+  min-width: 0;
 }
 
 .entry-portrait {
@@ -733,6 +880,7 @@
 .entry-name {
   font-size: calc(20 * var(--px));
   line-height: calc(22 * var(--px));
+  overflow-wrap: anywhere;
 }
 
 .entry-kind {
@@ -760,18 +908,24 @@
 
 /* ------------------------------------------------ Résumé */
 
+/* As many equal columns as fit (three on a phone, six when there's room), so the tabs and PRINT make a tidy block. */
 .res-tabs {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(72 * var(--px)), 1fr));
   gap: calc(4 * var(--px));
-}
-
-.tab-print {
-  margin-left: auto;
 }
 
 .res-panel {
   margin-top: calc(8 * var(--px));
+}
+
+/* In a screen that fills its frame, the panel takes what's left under the tabs, for its pages. */
+.res-fit {
+  margin-top: calc(4 * var(--px));
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
 }
 
 .res-entry + .res-entry {
@@ -819,16 +973,27 @@
   grid-template-columns: minmax(0, 1fr);
 }
 
+.town-map.town-map-fit {
+  flex: 1;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.game[data-layout="narrow"] .town-map.town-map-fit {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
 .town-map-view {
   position: relative;
-  width: calc(192 * var(--px));
-  height: calc(144 * var(--px));
+  width: calc(var(--map-w, 192) * var(--px));
+  height: calc(var(--map-h, 144) * var(--px));
 }
 
 .town-map-canvas {
   display: block;
-  width: calc(192 * var(--px));
-  height: calc(144 * var(--px));
+  width: calc(var(--map-w, 192) * var(--px));
+  height: calc(var(--map-h, 144) * var(--px));
   box-shadow:
     calc(-1 * var(--px)) 0 0 0 var(--edge),
     calc(1 * var(--px)) 0 0 0 var(--edge),
@@ -885,15 +1050,22 @@
 
 /* ------------------------------------------------ Options */
 
+/* A setting: its name, then its choices beside it (under it on a narrow screen). */
 .option-row {
-  margin: 0 0 calc(8 * var(--px));
-  padding: 0;
-  border: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(3 * var(--px)) calc(6 * var(--px));
 }
 
-.option-row legend {
-  margin-bottom: calc(4 * var(--px));
+.option-label {
+  flex: none;
+  min-width: calc(72 * var(--px));
   color: var(--ink-soft);
+}
+
+.game[data-layout="narrow"] .option-label {
+  flex-basis: 100%;
 }
 
 .option-choices {
@@ -1206,9 +1378,10 @@ span.tm-item {
   gap: 0;
 }
 
+/* The portrait is 40×48 pixels of art, shown twice as big. */
 .avatar-portrait {
-  width: calc(64 * var(--px));
-  height: calc(80 * var(--px));
+  width: calc(80 * var(--px));
+  height: calc(96 * var(--px));
   image-rendering: pixelated;
 }
 
@@ -1258,6 +1431,12 @@ span.tm-item {
   text-decoration: underline;
   text-decoration-thickness: calc(1 * var(--px));
   text-underline-offset: calc(2 * var(--px));
+}
+
+/* A row that isn't a link (BASED IN): plain text, lined up with the links' text after their arrow slot. */
+.gear-plain {
+  padding-left: calc(8 * var(--px));
+  text-decoration: none;
 }
 
 .game .gear-row [data-nav][data-current],
@@ -1459,16 +1638,33 @@ span.tm-item {
   background: #0a0e1e99;
 }
 
-.title-content {
+/* Top to bottom: the buttons, the logo and menu, the credits. Each takes its own room, so none can cover another. */
+.title-layout {
   position: absolute;
   inset: 0;
   display: flex;
   flex-direction: column;
+  gap: calc(4 * var(--px));
+  padding: calc(6 * var(--px)) calc(6 * var(--px)) calc(4 * var(--px));
+}
+
+.title-content {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: calc(6 * var(--px));
-  padding: calc(12 * var(--px)) calc(6 * var(--px)) calc(24 * var(--px));
+  gap: calc(4 * var(--px));
   text-align: center;
+}
+
+/* Centred when there's room; with none, the auto margins vanish and it starts at the top instead of running under the buttons. */
+.title-content > :first-child {
+  margin-top: auto;
+}
+
+.title-content > :last-child {
+  margin-bottom: auto;
 }
 
 .title-logo {
@@ -1507,23 +1703,51 @@ span.tm-item {
   text-shadow: calc(1 * var(--px)) calc(1 * var(--px)) 0 #00000055;
 }
 
-.title-mons {
+/* The row is as tall as the tallest Pokémon we show (Rotom's picture is 60 pixels), so its pictures loading can't move anything. */
+.title-row {
+  flex: none;
+  height: calc(60 * var(--px));
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  gap: calc(24 * var(--px));
 }
 
-.game[data-short] .title-mons {
+.game[data-tight] .title-row {
+  height: auto;
+}
+
+.title-menu-wrap {
+  position: relative;
+}
+
+/* Each Pokémon stands beside the menu, on the bottom edge of the row: the menu is 32 pixels tall, centred in 60.
+   The slot bobs, not the picture: the picture is zoomed, and a zoomed element would bob its 3 pixels times the zoom again. */
+.title-mon-slot {
+  position: absolute;
+  bottom: calc(-14 * var(--px));
+  display: flex;
+  animation: title-bob 1.8s steps(1) infinite;
+}
+
+.title-mon-left {
+  right: calc(100% + 8 * var(--px));
+}
+
+.title-mon-right {
+  left: calc(100% + 8 * var(--px));
+  animation-delay: -0.9s;
+}
+
+.game[data-tight] .title-mon-slot {
   display: none;
 }
 
 .title-mon {
-  animation: title-bob 1.8s steps(1) infinite;
-}
-
-.title-mon:last-child {
-  animation-delay: -0.9s;
+  display: block;
+  /* Not the reset's 100%: in a slot that shrinks to fit its picture, that would be 0. */
+  max-width: none;
+  /* The box is square but the picture may not be: fit it in without stretching. */
+  object-fit: contain;
 }
 
 @keyframes title-bob {
@@ -1567,29 +1791,19 @@ span.tm-item {
   }
 }
 
-.title-foot {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
 .title-tools {
-  position: absolute;
-  top: calc(6 * var(--px));
-  right: calc(6 * var(--px));
-  left: calc(6 * var(--px));
+  flex: none;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: calc(4 * var(--px));
 }
 
-.title-tools button {
-  pointer-events: auto;
-}
-
+/* It takes all the room to the right of HELP, so the FULLSCREEN button joining it after the page loads doesn't move it. */
 .title-tools-right {
+  flex: 1;
   display: flex;
+  justify-content: flex-end;
   gap: calc(4 * var(--px));
 }
 
@@ -1610,11 +1824,11 @@ span.tm-item {
 }
 
 .title-disclaimer {
-  position: absolute;
-  right: calc(6 * var(--px));
-  bottom: calc(4 * var(--px));
-  left: calc(6 * var(--px));
-  color: #ffffffcc;
+  flex: none;
+  margin: 0 calc(-6 * var(--px)) calc(-4 * var(--px));
+  padding: calc(2 * var(--px)) calc(6 * var(--px)) calc(4 * var(--px));
+  background: #0a0e1ecc;
+  color: #ffffffe6;
   font-size: calc(5 * var(--px));
   line-height: calc(6 * var(--px));
   text-align: center;
@@ -1643,15 +1857,16 @@ span.tm-item {
   top: calc(8 * var(--px));
   left: 50%;
   width: calc(80 * var(--px));
-  height: calc(100 * var(--px));
+  height: calc(96 * var(--px));
   margin-left: calc(-40 * var(--px));
   image-rendering: pixelated;
 }
 
+/* No room for it twice as big on a very short screen: one art pixel per game pixel. */
 .game[data-short] .intro-portrait {
-  width: calc(64 * var(--px));
-  height: calc(80 * var(--px));
-  margin-left: calc(-32 * var(--px));
+  width: calc(40 * var(--px));
+  height: calc(48 * var(--px));
+  margin-left: calc(-20 * var(--px));
 }
 
 .intro-skip {
@@ -1670,13 +1885,69 @@ span.tm-item {
   background: #cbe6a8;
 }
 
+/* The sky reaches down to 64 pixels below the top of the stage (see .battle-stage). */
 .battle::before {
   content: "";
   position: absolute;
   inset: 0 0 auto;
-  height: calc(64 * var(--px));
+  height: calc(
+    100% - 54 * var(--px) - min(100% - 54 * var(--px), 168 * var(--px)) + 64 * var(--px)
+  );
   background: #bfe0f2;
   box-shadow: 0 calc(2 * var(--px)) 0 0 #a9d0a0;
+}
+
+/* Clouds drift across the empty sky above the stage. On a short screen there is none (this has no height). */
+.battle-sky {
+  position: absolute;
+  inset: 0 0 calc(54 * var(--px) + min(100% - 54 * var(--px), 168 * var(--px)));
+  overflow: hidden;
+}
+
+.battle-cloud {
+  position: absolute;
+  left: 0;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  image-rendering: pixelated;
+  animation: cloud-drift 150s steps(500) infinite;
+}
+
+.battle-cloud-a {
+  top: round(10%, calc(1 * var(--px)));
+  width: calc(88 * var(--px));
+  height: calc(28 * var(--px));
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2788%27%20height=%2728%27%20viewBox=%270%200%2088%2028%27%20shape-rendering=%27crispEdges%27%3E%3Cpath%20fill=%27%23fbfdff%27%20d=%27M27%200h6v1h-6zM24%201h12v1h-12zM23%202h14v1h-14zM57%202h6v1h-6zM22%203h16v1h-16zM55%203h10v1h-10zM21%204h18v1h-18zM43%204h6v1h-6zM53%204h14v1h-14zM20%205h48v1h-48zM19%206h49v1h-49zM19%207h50v1h-50zM19%208h50v1h-50zM18%209h57v1h-57zM13%2010h64v1h-64zM11%2011h67v1h-67zM10%2012h69v1h-69zM9%2013h70v1h-70zM9%2014h71v1h-71zM8%2015h72v1h-72zM8%2016h72v1h-72zM8%2017h72v1h-72zM8%2018h72v1h-72zM8%2019h72v1h-72zM8%2020h71v1h-71zM9%2021h46v1h-46zM57%2021h6v1h-6zM65%2021h14v1h-14zM9%2022h14v1h-14zM24%2022h12v1h-12zM38%2022h16v1h-16zM66%2022h12v1h-12z%27/%3E%3Cpath%20fill=%27%23d3e8f5%27%20d=%27M10%2023h12v1h-12zM27%2023h6v1h-6zM39%2023h14v1h-14zM67%2023h10v1h-10zM11%2024h65v1h-65z%27/%3E%3C/svg%3E");
+  animation-delay: -40s;
+}
+
+.battle-cloud-b {
+  top: round(38%, calc(1 * var(--px)));
+  width: calc(60 * var(--px));
+  height: calc(20 * var(--px));
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2760%27%20height=%2720%27%20viewBox=%270%200%2060%2020%27%20shape-rendering=%27crispEdges%27%3E%3Cpath%20fill=%27%23fbfdff%27%20d=%27M21%200h6v1h-6zM19%201h10v1h-10zM18%202h12v1h-12zM17%203h14v1h-14zM16%204h16v1h-16zM35%204h6v1h-6zM16%205h16v1h-16zM33%205h10v1h-10zM15%206h29v1h-29zM9%207h36v1h-36zM7%208h38v1h-38zM46%208h4v1h-4zM7%209h45v1h-45zM6%2010h47v1h-47zM6%2011h47v1h-47zM6%2012h48v1h-48zM6%2013h48v1h-48zM6%2014h48v1h-48zM6%2015h24v1h-24zM31%2015h23v1h-23z%27/%3E%3Cpath%20fill=%27%23d3e8f5%27%20d=%27M7%2016h10v1h-10zM19%2016h10v1h-10zM31%2016h22v1h-22zM7%2017h46v1h-46z%27/%3E%3C/svg%3E");
+  animation-duration: 110s;
+  animation-delay: -85s;
+}
+
+.battle-cloud-c {
+  top: round(64%, calc(1 * var(--px)));
+  width: calc(40 * var(--px));
+  height: calc(14 * var(--px));
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20width=%2740%27%20height=%2714%27%20viewBox=%270%200%2040%2014%27%20shape-rendering=%27crispEdges%27%3E%3Cpath%20fill=%27%23fbfdff%27%20d=%27M16%200h8v1h-8zM15%201h10v1h-10zM14%202h12v1h-12zM13%203h14v1h-14zM7%204h26v1h-26zM6%205h28v1h-28zM5%206h30v1h-30zM5%207h30v1h-30zM5%208h30v1h-30zM5%209h30v1h-30z%27/%3E%3Cpath%20fill=%27%23d3e8f5%27%20d=%27M5%2010h30v1h-30zM5%2011h30v1h-30z%27/%3E%3C/svg%3E");
+  animation-duration: 190s;
+  animation-delay: -120s;
+}
+
+/* The stage is everything above the bottom panel (48 pixels tall, 6 from the bottom): the field, both
+   Pokémon and their boxes. It sits right on the panel and is never more than 168 pixels tall, so on a tall
+   phone the two Pokémon stay close instead of a whole screen apart, and nothing is ever hidden by the panel. */
+.battle-stage {
+  position: absolute;
+  right: 0;
+  bottom: calc(54 * var(--px));
+  left: 0;
+  height: min(calc(100% - 54 * var(--px)), calc(168 * var(--px)));
 }
 
 .battle-scene {
@@ -1692,7 +1963,7 @@ span.tm-item {
 }
 
 .battle-platform-wild {
-  top: round(36%, calc(1 * var(--px)));
+  top: max(calc(63 * var(--px)), round(34%, calc(1 * var(--px))));
   left: round(72%, calc(1 * var(--px)));
   width: calc(104 * var(--px));
   height: calc(20 * var(--px));
@@ -1701,7 +1972,7 @@ span.tm-item {
 }
 
 .battle-platform-partner {
-  top: round(80%, calc(1 * var(--px)));
+  top: calc(100% - 11 * var(--px));
   left: round(26%, calc(1 * var(--px)));
   width: calc(136 * var(--px));
   height: calc(26 * var(--px));
@@ -1718,12 +1989,12 @@ span.tm-item {
 }
 
 .battle-wild {
-  top: round(38%, calc(1 * var(--px)));
+  top: max(calc(66 * var(--px)), round(37%, calc(1 * var(--px))));
   left: round(72%, calc(1 * var(--px)));
 }
 
 .battle-partner {
-  top: round(84%, calc(1 * var(--px)));
+  top: calc(100% - 4 * var(--px));
   left: round(26%, calc(1 * var(--px)));
 }
 
@@ -1734,7 +2005,7 @@ span.tm-item {
 }
 
 .battle-ball {
-  top: round(37%, calc(1 * var(--px)));
+  top: max(calc(66 * var(--px)), round(37%, calc(1 * var(--px))));
   left: round(72%, calc(1 * var(--px)));
 }
 
@@ -1751,6 +2022,17 @@ span.tm-item {
   inset: 0;
   background: #ffffff;
   animation: battle-flash 0.8s steps(1) both;
+}
+
+/* From just off the left edge to just off the right, one game pixel or so at a time. */
+@keyframes cloud-drift {
+  from {
+    translate: calc(-90 * var(--px)) 0;
+  }
+
+  to {
+    translate: calc((var(--vw, 320) + 4) * var(--px)) 0;
+  }
 }
 
 @keyframes battle-flash {
@@ -1947,13 +2229,13 @@ span.tm-item {
 }
 
 .hp-box-wild {
-  top: calc(8 * var(--px));
-  left: calc(8 * var(--px));
+  top: calc(4 * var(--px));
+  left: calc(6 * var(--px));
 }
 
 .hp-box-partner {
-  right: calc(8 * var(--px));
-  bottom: calc(62 * var(--px));
+  right: calc(6 * var(--px));
+  bottom: calc(4 * var(--px));
 }
 
 .hp-name {
@@ -2072,17 +2354,24 @@ span.tm-item {
   color: #ffffff;
 }
 
+.battle-submenu {
+  display: flex;
+  align-items: center;
+  gap: calc(6 * var(--px));
+}
+
 .battle-moves {
+  flex: 1 1 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: calc(3 * var(--px)) calc(6 * var(--px));
-  margin-right: calc(50 * var(--px));
 }
 
 .battle-balls {
+  flex: 1 1 auto;
   display: grid;
-  gap: calc(3 * var(--px));
-  margin-right: calc(50 * var(--px));
+  grid-template-columns: 1fr 1fr;
+  gap: calc(3 * var(--px)) calc(6 * var(--px));
 }
 
 .battle-option {
@@ -2091,6 +2380,7 @@ span.tm-item {
   gap: calc(3 * var(--px));
   padding: calc(1 * var(--px)) calc(3 * var(--px)) calc(1 * var(--px)) calc(2 * var(--px));
   text-align: left;
+  white-space: nowrap;
 }
 
 .battle-option .type-badge {
@@ -2109,21 +2399,462 @@ span.tm-item {
 }
 
 .battle-cancel {
-  position: absolute;
-  right: calc(8 * var(--px));
-  bottom: calc(8 * var(--px));
+  flex: none;
+  align-self: flex-end;
   padding: calc(1 * var(--px)) calc(5 * var(--px));
   background: var(--edge);
   color: #ffffff;
   text-shadow: none;
 }
 
+/* ------------------------------------------------ VOLTORB FLIP */
+
+.vf {
+  --card: 22;
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(8 * var(--px));
+  align-items: flex-start;
+}
+
+.vf[data-compact] {
+  --card: 16;
+}
+
+.vf-board {
+  display: grid;
+  flex: none;
+  gap: calc(2 * var(--px));
+}
+
+.vf[data-phase="lost"] .vf-board {
+  animation: vf-shake 0.4s steps(4);
+}
+
+@keyframes vf-shake {
+  25% {
+    transform: translateX(calc(2 * var(--px)));
+  }
+  50% {
+    transform: translateX(calc(-2 * var(--px)));
+  }
+  75% {
+    transform: translateX(calc(1 * var(--px)));
+  }
+}
+
+.vf-row {
+  display: grid;
+  grid-template-columns: repeat(6, calc(var(--card) * var(--px)));
+  gap: calc(2 * var(--px));
+}
+
+/* A card face down: teal, with its top and left edges catching the light. */
+.vf-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--card) * var(--px));
+  height: calc(var(--card) * var(--px));
+  padding: 0;
+  background: #2f9e8f;
+  box-shadow:
+    0 0 0 calc(1 * var(--px)) #173f3a,
+    inset calc(1 * var(--px)) calc(1 * var(--px)) 0 0 #57c4b4,
+    inset calc(-1 * var(--px)) calc(-1 * var(--px)) 0 0 #1f6b61;
+  color: #2a2a3a;
+  font-size: calc(10 * var(--px));
+  line-height: 1;
+  text-shadow: none;
+}
+
+.vf:not([data-compact]) .vf-card {
+  font-size: calc(20 * var(--px));
+}
+
+.game .vf-card::before {
+  display: none;
+}
+
+/* The cursor: a gold frame round the card, brighter teal inside. */
+.game .vf-card[data-current],
+.game .vf-card:hover {
+  background: #45bfae;
+  box-shadow:
+    0 0 0 calc(1 * var(--px)) var(--gold),
+    0 0 0 calc(2 * var(--px)) #173f3a,
+    inset calc(1 * var(--px)) calc(1 * var(--px)) 0 0 #7fdccd,
+    inset calc(-1 * var(--px)) calc(-1 * var(--px)) 0 0 #1f6b61;
+}
+
+/* Face up: cream, and the number in its own colour. */
+.game .vf-card[data-face="up"] {
+  background: #f6f0dc;
+  box-shadow:
+    0 0 0 calc(1 * var(--px)) #7a7462,
+    inset calc(-1 * var(--px)) calc(-1 * var(--px)) 0 0 #d8d0b4;
+}
+
+/* The cursor on a card that's face up: the same gold frame. */
+.game .vf-card[data-face="up"][data-current] {
+  box-shadow:
+    0 0 0 calc(1 * var(--px)) var(--gold),
+    0 0 0 calc(2 * var(--px)) #7a7462,
+    inset calc(-1 * var(--px)) calc(-1 * var(--px)) 0 0 #d8d0b4;
+}
+
+.vf-card[data-value="1"] {
+  color: #5a6a9a;
+}
+
+.vf-card[data-value="2"] {
+  color: #e0782a;
+}
+
+.vf-card[data-value="3"] {
+  color: #d03a3a;
+}
+
+.vf-card[data-revealed] {
+  opacity: 0.55;
+}
+
+/* The Voltorb that went off: a square halo bursting outwards. */
+.vf-card[data-boom] {
+  z-index: 2;
+  animation: vf-boom 0.6s steps(6);
+}
+
+/* The halo grows, then is gone. */
+@keyframes vf-boom {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 0 #ffffff,
+      0 0 0 0 #ffcb05;
+  }
+  50% {
+    box-shadow:
+      0 0 0 calc(7 * var(--px)) #ffcb05,
+      0 0 0 calc(3 * var(--px)) #ff7a1a;
+  }
+}
+
+/* Notes on a card that's still face down: V, 1, 2 and 3, one to each corner. */
+.vf-mark {
+  position: absolute;
+  color: #ffffff;
+  font-size: calc(5 * var(--px));
+  line-height: 1;
+  text-shadow: calc(1 * var(--px)) calc(1 * var(--px)) 0 #173f3a;
+}
+
+.vf-mark-0 {
+  top: calc(1 * var(--px));
+  left: calc(2 * var(--px));
+  color: #ffb3aa;
+}
+
+.vf-mark-1 {
+  top: calc(1 * var(--px));
+  right: calc(2 * var(--px));
+}
+
+.vf-mark-2 {
+  bottom: calc(1 * var(--px));
+  left: calc(2 * var(--px));
+}
+
+.vf-mark-3 {
+  right: calc(2 * var(--px));
+  bottom: calc(1 * var(--px));
+}
+
+.vf-ball {
+  display: block;
+  image-rendering: pixelated;
+}
+
+.vf-card-ball {
+  width: calc(8 * var(--k) * var(--px));
+  height: calc(8 * var(--k) * var(--px));
+}
+
+/* A clue tile: points at the top, the Voltorbs hiding in the line below. */
+.vf-clue {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: calc(var(--card) * var(--px));
+  height: calc(var(--card) * var(--px));
+  padding: calc(1 * var(--px)) calc(2 * var(--px));
+  background: var(--clue);
+  box-shadow: 0 0 0 calc(1 * var(--px)) #2a2a3a;
+  color: #ffffff;
+  text-shadow: calc(1 * var(--px)) calc(1 * var(--px)) 0 #00000066;
+}
+
+.vf-points {
+  font-size: calc(10 * var(--px));
+  line-height: calc(10 * var(--px));
+  text-align: right;
+}
+
+.vf-orbs {
+  display: flex;
+  gap: calc(1 * var(--px));
+  align-items: center;
+  font-size: calc(5 * var(--px));
+  line-height: calc(6 * var(--px));
+}
+
+.vf-clue-ball {
+  width: calc(5 * var(--px));
+  height: calc(5 * var(--px));
+}
+
+.vf-side {
+  display: grid;
+  flex: 1 1 calc(104 * var(--px));
+  gap: calc(4 * var(--px));
+  min-width: calc(96 * var(--px));
+}
+
+.game[data-layout="narrow"] .vf-side {
+  order: -1;
+  flex-basis: 100%;
+}
+
+.vf-stat {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(6 * var(--px));
+}
+
+.vf-message {
+  min-height: calc(24 * var(--px));
+  color: var(--ink-soft);
+}
+
+.vf-prize {
+  color: var(--red);
+}
+
+.vf-boom-mon {
+  justify-self: start;
+}
+
+.vf-pens {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(3 * var(--px));
+}
+
+.vf-chip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(14 * var(--px));
+  min-height: calc(14 * var(--px));
+  padding: 0 calc(3 * var(--px));
+  background: #ffffff;
+  box-shadow:
+    calc(-1 * var(--px)) 0 0 0 var(--edge),
+    calc(1 * var(--px)) 0 0 0 var(--edge),
+    0 calc(-1 * var(--px)) 0 0 var(--edge),
+    0 calc(1 * var(--px)) 0 0 var(--edge);
+}
+
+.game .vf-chip::before {
+  display: none;
+}
+
+.game .vf-chip[aria-checked="true"],
+.game .vf-chip[aria-checked="true"]:hover {
+  background: var(--edge);
+  color: #ffffff;
+}
+
+.vf-help .bullets {
+  margin-bottom: calc(6 * var(--px));
+}
+
+/* ------------------------------------------------ prizes */
+
+.prize-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(calc(64 * var(--px)), 1fr));
+  gap: calc(4 * var(--px));
+}
+
+.prize {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(2 * var(--px));
+  padding: calc(4 * var(--px)) calc(3 * var(--px));
+  background: #ffffff;
+  text-align: center;
+  box-shadow:
+    calc(-1 * var(--px)) 0 0 0 var(--edge),
+    calc(1 * var(--px)) 0 0 0 var(--edge),
+    0 calc(-1 * var(--px)) 0 0 var(--edge),
+    0 calc(1 * var(--px)) 0 0 var(--edge),
+    inset 0 calc(-2 * var(--px)) 0 0 var(--hi);
+}
+
+.game .prize::before {
+  display: none;
+}
+
+.game .prize[aria-pressed="true"],
+.game .prize[aria-pressed="true"]:hover {
+  background: var(--edge);
+  color: #ffffff;
+}
+
+/* A light backing, so a small figure reads whether or not the prize is the chosen one. */
+.prize-picture {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: calc(28 * var(--px));
+  min-height: calc(26 * var(--px));
+  background: #f6f0dc;
+  box-shadow: 0 0 0 calc(1 * var(--px)) #7a7462;
+}
+
+.prize-picture[data-locked] {
+  opacity: 0.35;
+}
+
+.prize-look {
+  width: calc(16 * var(--px));
+  height: calc(20 * var(--px));
+  image-rendering: pixelated;
+}
+
+.prize-swatches {
+  display: flex;
+}
+
+.prize-swatches > span {
+  width: calc(8 * var(--px));
+  height: calc(12 * var(--px));
+}
+
+.prize-lock {
+  color: var(--ink-soft);
+  font-size: calc(5 * var(--px));
+  line-height: calc(6 * var(--px));
+}
+
+.game .prize[aria-pressed="true"] .prize-lock {
+  color: #ffffff;
+}
+
+/* Screen colours: the whole game is filtered (see PaletteFilters). */
+.palette-filters {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.game[data-palette="gameboy"] {
+  filter: url("#palette-gameboy");
+}
+
+.game[data-palette="sepia"] {
+  filter: url("#palette-sepia");
+}
+
+/* ------------------------------------------------ cameos: something pops out of the TV, the screen comes apart */
+
+.cameo {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.cameo[data-cameo="rotom"] {
+  background: #0a0e1e;
+}
+
+/* TV static: a tile of low-contrast noise, repeated, that jumps about in steps. */
+.cameo-static {
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat;
+  background-size: calc(64 * var(--px)) calc(64 * var(--px));
+  image-rendering: pixelated;
+  animation: cameo-static 0.5s steps(3) infinite;
+}
+
+@keyframes cameo-static {
+  to {
+    background-position: calc(21 * var(--px)) calc(11 * var(--px));
+  }
+}
+
+.cameo-mon-slot {
+  position: relative;
+  display: flex;
+  animation: cameo-hop 0.6s steps(6) 4;
+}
+
+.cameo-mon {
+  display: block;
+  max-width: none;
+}
+
+@keyframes cameo-hop {
+  50% {
+    transform: translateY(calc(-14 * var(--px)));
+  }
+}
+
+/* The jumble sits on the scrambled town, shivering a pixel or two. */
+.cameo-missingno {
+  width: calc(24 * var(--px));
+  height: calc(48 * var(--px));
+  image-rendering: pixelated;
+  animation: cameo-shiver 0.45s steps(1) infinite;
+}
+
+@keyframes cameo-shiver {
+  25% {
+    transform: translateX(calc(2 * var(--px)));
+  }
+  50% {
+    transform: translateX(calc(-2 * var(--px))) translateY(calc(1 * var(--px)));
+  }
+  75% {
+    transform: translateX(calc(1 * var(--px)));
+  }
+}
+
+.cameo [data-still] {
+  animation-name: none;
+}
+
 /* ------------------------------------------------ the touch pad: a pixel-art handheld, its pixels 3 game pixels wide */
 
 .touch-controls {
-  /* The pad's own pixel, from the window alone (never from the game's pixel size, which depends on the room left after the pad). Even, so half of it is whole too. */
-  --pp: max(2px, round(nearest, calc(min(100vw, 100vh) / 90), 2px));
+  /* The pad's own pixel, from the window alone (never from the game's pixel size, which depends on the room left after the pad). Even, so half of it is whole too.
+     The pad is 110 of its pixels across in one row (80 when START drops below), 44 (54) tall, so the pixel is the biggest even size that fits both, capped for tablets. The divisors have a little slack so a window exactly the right size doesn't round down. */
+  --pp-w: calc(100vw / 111.5);
+  --pp: max(2px, round(down, min(var(--pp-w), calc(100vh / 141), 6px), 2px));
   display: none;
+}
+
+@supports not (width: round(down, 5px, 2px)) {
+  .touch-controls {
+    --pp: 4px;
+  }
 }
 
 @media (pointer: coarse) {
@@ -2303,9 +3034,10 @@ span.tm-item {
   transform: translateY(calc(1 * var(--pp)));
 }
 
-/* Narrow phones (360px, 375px, 320px): START gets a row of its own, so nothing is pushed off the edge. */
-@media (max-width: 389px) {
+/* Phones held upright (up to 459px): START gets a row of its own, so the pad is 80 of its pixels across and nothing is pushed off the edge. */
+@media (max-width: 459px) {
   .touch-controls {
+    --pp-w: calc(100vw / 79.5);
     grid-template-columns: 1fr auto;
   }
 
@@ -2326,7 +3058,8 @@ span.tm-item {
   }
 
   .touch-controls {
-    --pp: max(2px, round(nearest, calc(100vh / 125), 1px));
+    /* The two halves take at most 45% of the width (82 of the pad's pixels), and the D-pad at most half the height. */
+    --pp: max(2px, round(down, min(calc(100vw / 181.5), calc(100vh / 71.5)), 1px));
     display: contents;
   }
 
@@ -2358,5 +3091,17 @@ span.tm-item {
 
   .stage-screen::after {
     display: none;
+  }
+
+  .battle-cloud-a {
+    left: 14%;
+  }
+
+  .battle-cloud-b {
+    left: 58%;
+  }
+
+  .battle-cloud-c {
+    left: 32%;
   }
 }

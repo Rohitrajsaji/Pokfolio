@@ -12,6 +12,7 @@ import {
 } from "./characters";
 import { DEMO_TOWN_ROWS, paintCenterScene, paintLabScene, paintTownScene } from "./demo";
 import { validateGrid } from "./grid";
+import { OUTLINE, SNORLAX, WATER } from "./palette";
 import { PixelBuffer } from "./pixel-buffer";
 import {
   FENCE_TILE,
@@ -21,6 +22,7 @@ import {
   paintBush,
   paintJobBoard,
   paintLamp,
+  paintSnorlax,
   paintTree,
 } from "./props";
 import {
@@ -30,6 +32,8 @@ import {
   TALL_GRASS_FRAMES,
   YELLOW_FLOWER_FRAMES,
   paintPath,
+  paintWater,
+  type WaterNeighbours,
 } from "./terrain";
 
 function opaquePixels(buf: PixelBuffer): number {
@@ -139,6 +143,115 @@ describe("props", () => {
     paintLamp(buf, 0, 0, true);
     paintJobBoard(buf, 0, 0);
     expect(opaquePixels(buf)).toBe(32 * 32);
+  });
+
+  it("paints Snorlax inside its 32×32 box, filling most of it and leaving the corners clear", () => {
+    const buf = new PixelBuffer(48, 48);
+    paintSnorlax(buf, 8, 8);
+    const spilled: string[] = [];
+    for (let y = 0; y < 48; y++) {
+      for (let x = 0; x < 48; x++) {
+        const inside = x >= 8 && x < 40 && y >= 8 && y < 40;
+        if (!inside && buf.get(x, y) !== null) spilled.push(`${x},${y}`);
+      }
+    }
+    expect(spilled).toEqual([]);
+    expect(opaquePixels(buf)).toBeGreaterThan(500);
+    expect(buf.get(8, 8)).toBeNull();
+    expect(buf.get(39, 8)).toBeNull();
+    // Only colours from palette.ts, so restyling them there restyles it.
+    const allowed = new Set<string | null>([OUTLINE, ...Object.values(SNORLAX)]);
+    for (let y = 8; y < 40; y++) {
+      for (let x = 8; x < 40; x++) {
+        const colour = buf.get(x, y);
+        if (colour) expect(allowed.has(colour), `${x},${y}: ${colour}`).toBe(true);
+      }
+    }
+  });
+});
+
+describe("the pond", () => {
+  const SIDES = ["n", "s", "e", "w"] as const;
+  const nbFor = (mask: number): WaterNeighbours =>
+    Object.fromEntries(
+      SIDES.map((side, bit) => [side, Boolean(mask & (1 << bit))]),
+    ) as unknown as WaterNeighbours;
+  const tile = (nb: WaterNeighbours, frame: 0 | 1 = 0, seed = 1) => {
+    const buf = new PixelBuffer(16, 16);
+    paintWater(buf, 0, 0, nb, frame, seed);
+    return buf;
+  };
+  const LAND = { n: false, s: false, e: false, w: false };
+  const WATER_ALL = { n: true, s: true, e: true, w: true };
+  const differ = (a: PixelBuffer, b: PixelBuffer) => a.data.some((value, i) => value !== b.data[i]);
+
+  it("paints a tile for every combination of neighbours, in both frames, giving up at most the corners", () => {
+    for (let mask = 0; mask < 16; mask++) {
+      for (const frame of [0, 1] as const) {
+        const painted = opaquePixels(tile(nbFor(mask), frame, mask));
+        expect(painted, `mask ${mask}, frame ${frame}`).toBeGreaterThanOrEqual(256 - 4 * 5);
+        expect(painted, `mask ${mask}, frame ${frame}`).toBeLessThanOrEqual(256);
+      }
+    }
+  });
+
+  it("is water all the way across when water lies on every side, with no shore drawn", () => {
+    const buf = tile(WATER_ALL);
+    expect(opaquePixels(buf)).toBe(256);
+    for (let y = 0; y < 16; y++) {
+      for (let x = 0; x < 16; x++) expect(buf.get(x, y), `${x},${y}`).not.toBe(WATER.edge);
+    }
+  });
+
+  it("rounds off all four corners of a tile with land on every side, five pixels each", () => {
+    const buf = tile(LAND);
+    expect(opaquePixels(buf)).toBe(256 - 4 * 5);
+    for (const [x, y] of [
+      [0, 0],
+      [15, 0],
+      [0, 15],
+      [15, 15],
+    ]) {
+      expect(buf.get(x, y), `${x},${y}`).toBeNull();
+    }
+  });
+
+  it("rounds off only the corner where land meets it on both sides", () => {
+    const topLeft = tile({ n: false, w: false, s: true, e: true });
+    expect(topLeft.get(0, 0)).toBeNull();
+    expect(topLeft.get(15, 0)).not.toBeNull();
+    expect(topLeft.get(0, 15)).not.toBeNull();
+    expect(topLeft.get(15, 15)).not.toBeNull();
+    // Land on one side only leaves the tile square.
+    expect(opaquePixels(tile({ n: false, s: true, e: true, w: true }))).toBe(256);
+  });
+
+  it("outlines every side that meets land, and none that meets water", () => {
+    const buf = tile({ n: false, s: true, e: true, w: true });
+    for (let x = 0; x < 16; x++) {
+      expect(buf.get(x, 0), `top row ${x}`).toBe(WATER.edge);
+      expect(buf.get(x, 15), `bottom row ${x}`).not.toBe(WATER.edge);
+    }
+    for (let x = 0; x < 16; x++)
+      expect(buf.get(x, 1), `foam under the outline ${x}`).toBe(WATER.foam);
+  });
+
+  it("moves its ripples between the two frames, and looks different from the tile beside it", () => {
+    expect(differ(tile(WATER_ALL, 0, 3), tile(WATER_ALL, 1, 3))).toBe(true);
+    expect(differ(tile(WATER_ALL, 0, 3), tile(WATER_ALL, 0, 4))).toBe(true);
+    // Drawing it twice gives the same picture: nothing about it is random.
+    expect(differ(tile(WATER_ALL, 1, 3), tile(WATER_ALL, 1, 3))).toBe(false);
+  });
+
+  it("only touches its own tile when painted into a bigger picture", () => {
+    const buf = new PixelBuffer(48, 48);
+    paintWater(buf, 16, 16, LAND, 0, 5);
+    for (let y = 0; y < 48; y++) {
+      for (let x = 0; x < 48; x++) {
+        const inside = x >= 16 && x < 32 && y >= 16 && y < 32;
+        if (!inside) expect(buf.get(x, y), `${x},${y}`).toBeNull();
+      }
+    }
   });
 });
 

@@ -2,13 +2,24 @@
  * Turns the town and rooms in content/world.ts into playable maps: collision,
  * doors, readable things, and a painter for the parts that never move.
  */
-import { experience, profile, projects, rooms, site, town } from "@content";
+import {
+  experience,
+  playerLooks,
+  profile,
+  projects,
+  rooms,
+  secretRooms,
+  site,
+  town,
+} from "@content";
 import type {
   CastMember,
   Furniture,
   Interaction,
   RoomId,
   RoomSpec,
+  SecretId,
+  SecretRoomId,
   TownSpec,
 } from "@content/types";
 import { BUILDINGS } from "@/art/buildings";
@@ -17,17 +28,43 @@ import * as room from "@/art/interior";
 import { TYPE_COLORS } from "@/art/palette";
 import type { PixelBuffer } from "@/art/pixel-buffer";
 import { FENCE_TILE, MAILBOX_TILE, ROCK_TILE, SIGN_TILE } from "@/art/props";
-import { paintGround, paintObjects, treesFromGround, type Placed } from "@/art/scene";
+import {
+  paintGround,
+  paintObjects,
+  treesFromGround,
+  waterNeighbours,
+  type Placed,
+} from "@/art/scene";
 import { TILE } from "@/art/terrain";
 import { formatRange } from "@/lib/dates";
 import { fill } from "../text";
-import { tileIndex, type MapId, type RuntimeMap, type Spot } from "./runtime";
+import { inBounds, tileIndex, type MapId, type RuntimeMap, type Spot, type Warp } from "./runtime";
 
 export function lookFor(member: CastMember): CharacterLook {
   return member === "professor" ? avatarLook(site.avatar) : LOOKS[member];
 }
 
-type MapBase = Omit<RuntimeMap, "npcs" | "start" | "paint">;
+/** The visitor's own character in one of the looks they've won (the classic one if the id isn't known). */
+export function playerLook(id: string): CharacterLook {
+  const spec = playerLooks.find((look) => look.id === id) ?? playerLooks[0];
+  const { hairStyle, outfit, glasses, hair, skin, top, accent, bottom, shoes, hat } = spec;
+  const changes: Partial<CharacterLook> = {
+    hairStyle,
+    outfit,
+    glasses,
+    hair,
+    skin,
+    top,
+    accent,
+    bottom,
+    shoes,
+    hat,
+  };
+  const defined = Object.fromEntries(Object.entries(changes).filter(([, v]) => v !== undefined));
+  return { ...LOOKS.player, ...defined };
+}
+
+type MapBase = Omit<RuntimeMap, "npcs" | "start" | "paint" | "border" | "routes" | "water">;
 
 function blankMap(
   id: MapId,
@@ -136,7 +173,7 @@ function paintFurniture(buf: PixelBuffer, item: Furniture): void {
     case "window":
       return room.paintInteriorWindow(buf, px, 5);
     case "poster":
-      return room.paintPoster(buf, px + 2, 6, ["#5fb4e8", "#e5463d"]);
+      return room.paintPoster(buf, px + 2, 6, ["#5fb4e8", "#e5463d"], item.crooked);
     case "diploma":
     case "certificate":
       return room.paintFrame(buf, px + 2, 5, item.item);
@@ -174,6 +211,12 @@ function paintFurniture(buf: PixelBuffer, item: Furniture): void {
     }
     case "statue":
       return room.paintStatue(buf, px, py - 12);
+    case "fossil":
+      return room.paintFossil(buf, px, py - 8);
+    case "cabinet":
+      return room.paintCabinet(buf, px, py - 18);
+    case "slots":
+      return room.paintSlotMachine(buf, px, py - 18);
   }
 }
 
@@ -185,7 +228,24 @@ function paintRank(item: Furniture): number {
   return item.y + (item.item === "bed" ? 2 : 1);
 }
 
-export function compileRoom(id: RoomId, spec: RoomSpec, doorFront: Spot): RuntimeMap {
+export interface RoomOptions {
+  /** Secrets found so far: a hidden staircase that one of them opens is open. */
+  secrets?: readonly SecretId[];
+  /** Where a hidden staircase leads: the way in to the room below. */
+  stairsTo?: Warp;
+}
+
+/**
+ * A room, ready to walk about in. `exit` is where its exit mat leads. If the room has a hidden
+ * staircase (`spec.stairs`) and its secret is in `secrets`, the poster is gone and the wall tile
+ * behind it is stairs leading to `stairsTo`.
+ */
+export function compileRoom(
+  id: RoomId | SecretRoomId,
+  spec: RoomSpec,
+  exit: Warp,
+  { secrets = [], stairsTo }: RoomOptions = {},
+): RuntimeMap {
   const map = blankMap(id, spec.name, false, spec.width, spec.height);
   const at = (x: number, y: number) => tileIndex(map, x, y);
 
@@ -209,25 +269,43 @@ export function compileRoom(id: RoomId, spec: RoomSpec, doorFront: Spot): Runtim
       : footprint(item);
     for (const [x, y] of tiles) map.reads.set(at(x, y), read);
   }
-  for (const x of roomExits(spec)) {
-    map.warps.set(at(x, spec.height - 1), { to: "town", ...doorFront });
+  for (const x of roomExits(spec)) map.warps.set(at(x, spec.height - 1), exit);
+
+  const stairs = spec.stairs && secrets.includes(spec.stairs.secret) ? spec.stairs : null;
+  if (stairs) {
+    if (!stairsTo) throw new Error(`${id} has a hidden staircase, but nowhere for it to lead`);
+    map.solid[at(stairs.x, 1)] = 0;
+    map.reads.delete(at(stairs.x, 1));
+    map.warps.set(at(stairs.x, 1), stairsTo);
   }
 
   const floorTop = 2 * TILE;
   const ordered = [...spec.furniture].sort((a, b) => paintRank(a) - paintRank(b));
   return {
     ...map,
+    stairsOpen: stairs !== null,
     npcs: spec.npcs,
     start: roomEntry(spec),
     paint(buf) {
       const w = spec.width * TILE;
       const h = spec.height * TILE;
       if (spec.floor === "wood") room.paintWoodFloor(buf, 0, floorTop, w, h - floorTop);
+      else if (spec.floor === "carpet") room.paintCarpetFloor(buf, 0, floorTop, w, h - floorTop);
       else room.paintTileFloor(buf, 0, floorTop, w, h - floorTop);
-      const wallStyle = spec.wall === "cool" ? room.INTERIOR.labWall : room.INTERIOR.wall;
+      const wallStyle =
+        spec.wall === "cool"
+          ? room.INTERIOR.labWall
+          : spec.wall === "dark"
+            ? room.ARCADE.wall
+            : room.INTERIOR.wall;
       room.paintBackWall(buf, 0, 0, w, floorTop, wallStyle);
       for (const x of roomExits(spec)) room.paintExitMat(buf, x * TILE, (spec.height - 1) * TILE);
-      for (const item of ordered) paintFurniture(buf, item);
+      if (stairs) room.paintStairs(buf, stairs.x * TILE, 0);
+      for (const item of ordered) {
+        // The poster that hid the staircase is gone.
+        if (stairs && item.item === "poster" && item.x === stairs.x) continue;
+        paintFurniture(buf, item);
+      }
     },
   };
 }
@@ -249,15 +327,15 @@ function townObjects(spec: TownSpec): Placed[] {
         y: p.y,
       });
     } else {
-      objects.push({ kind: p.prop as "bush" | "lamp" | "jobBoard", x: p.x, y: p.y });
+      objects.push({ kind: p.prop as "bush" | "lamp" | "jobBoard" | "snorlax", x: p.x, y: p.y });
     }
   }
   return objects;
 }
 
-/** Tiles a town prop blocks: the job board is 2×2 and a lamp's head fills the tile above it. */
+/** Tiles a town prop blocks: the job board and Snorlax are 2×2, and a lamp's head fills the tile above it. */
 function propTiles(p: TownSpec["props"][number]): Array<[number, number]> {
-  if (p.prop === "jobBoard") {
+  if (p.prop === "jobBoard" || p.prop === "snorlax") {
     return [
       [p.x, p.y],
       [p.x + 1, p.y],
@@ -280,11 +358,16 @@ export function compileTown(spec: TownSpec, roomSpecs: Record<RoomId, RoomSpec>)
   const map = blankMap("town", "{town}", true, width, height);
   const at = (x: number, y: number) => tileIndex(map, x, y);
 
+  const water: NonNullable<RuntimeMap["water"]> = [];
   spec.ground.forEach((row, y) => {
     if (row.length !== width)
       throw new Error(`Town row ${y} is ${row.length} wide, expected ${width}`);
     [...row].forEach((ch, x) => {
       if (ch === "T") map.solid[at(x, y)] = 1;
+      if (ch === "~") {
+        map.solid[at(x, y)] = 1;
+        water.push({ x, y, nb: waterNeighbours(spec.ground, x, y) });
+      }
       if (ch === '"') map.grass[at(x, y)] = 1;
       if (ch === "*") map.flowers.push({ x, y, color: "red" });
       if (ch === "+") map.flowers.push({ x, y, color: "yellow" });
@@ -322,15 +405,47 @@ export function compileTown(spec: TownSpec, roomSpecs: Record<RoomId, RoomSpec>)
     }
   }
 
+  const routes = (spec.routes ?? []).map((route) => {
+    route.tiles.forEach((tile, i) => {
+      if (!inBounds(map, tile.x, tile.y) || map.solid[at(tile.x, tile.y)] === 1) {
+        throw new Error(
+          `Route "${route.id}" steps onto (${tile.x}, ${tile.y}), which can't be walked on`,
+        );
+      }
+      const last = route.tiles[i - 1];
+      if (last && Math.abs(tile.x - last.x) + Math.abs(tile.y - last.y) !== 1) {
+        throw new Error(
+          `Route "${route.id}" jumps from (${last.x}, ${last.y}) to (${tile.x}, ${tile.y})`,
+        );
+      }
+    });
+    return { id: route.id, tiles: route.tiles.map((t) => at(t.x, t.y)), effect: route.effect };
+  });
+
   const objects = townObjects(spec);
+  // A sleeping giant snores from the top right of its head (it's 2×2 tiles, so 32 pixels across).
+  const snoring = spec.props
+    .filter((prop) => prop.prop === "snorlax")
+    .map((prop) => ({ x: prop.x * TILE + 24, y: prop.y * TILE + 3 }));
   return {
     ...map,
-    edge: spec.edge,
+    routes,
+    water,
+    snoring,
+    edge: spec.edge ?? [],
     npcs: spec.npcs,
     start: spec.start,
     paint(buf, lit) {
       paintGround(buf, spec.ground);
       paintObjects(buf, objects, lit);
+    },
+    // A tree on the town's own grass, the same as the ones round its edge (a tree is 2×2 tiles).
+    border: {
+      size: 2 * TILE,
+      paint(buf) {
+        paintGround(buf, ["TT", "TT"]);
+        paintObjects(buf, [{ kind: "tree", x: 0, y: 0 }], false);
+      },
     },
   };
 }
@@ -339,12 +454,78 @@ export function compileTown(spec: TownSpec, roomSpecs: Record<RoomId, RoomSpec>)
 
 export type World = Record<MapId, RuntimeMap>;
 
-export function buildWorld(townSpec: TownSpec = town, roomSpecs = rooms): World {
+/** Where you stand on stepping out of a building's door. */
+function doorFront(b: TownSpec["buildings"][number]): Spot {
+  const def = BUILDINGS[b.building];
+  return { x: b.x + def.door.x, y: b.y + def.door.y + 1, facing: "down" };
+}
+
+function compileBuildingRoom(
+  b: TownSpec["buildings"][number],
+  roomSpecs: Record<RoomId, RoomSpec>,
+  secretSpecs: Record<SecretRoomId, RoomSpec>,
+  secrets: readonly SecretId[],
+): RuntimeMap {
+  const spec = roomSpecs[b.building];
+  const below = spec.stairs ? secretSpecs[spec.stairs.to] : undefined;
+  return compileRoom(
+    b.building,
+    spec,
+    { to: "town", ...doorFront(b) },
+    { secrets, stairsTo: below && { to: spec.stairs!.to, ...roomEntry(below) } },
+  );
+}
+
+/** A room found through a hidden staircase: its exit leads back up to the room it hangs off. */
+function compileSecretRoom(
+  id: SecretRoomId,
+  roomSpecs: Record<RoomId, RoomSpec>,
+  secretSpecs: Record<SecretRoomId, RoomSpec>,
+): RuntimeMap {
+  const spec = secretSpecs[id];
+  const host = spec.leadsTo;
+  const stairs = host && roomSpecs[host].stairs;
+  if (!host || !stairs || stairs.to !== id) {
+    throw new Error(`${id} must lead to a room whose hidden staircase leads back to it`);
+  }
+  return compileRoom(id, spec, { to: host, x: stairs.x, y: 2, facing: "down" });
+}
+
+/** Every map in the game. `secrets` are the ones found so far; none, at the start of a visit. */
+export function buildWorld(
+  townSpec: TownSpec = town,
+  roomSpecs: Record<RoomId, RoomSpec> = rooms,
+  secretSpecs: Record<SecretRoomId, RoomSpec> = secretRooms,
+  secrets: readonly SecretId[] = [],
+): World {
   const world = { town: compileTown(townSpec, roomSpecs) } as World;
   for (const b of townSpec.buildings) {
-    const def = BUILDINGS[b.building];
-    const doorFront: Spot = { x: b.x + def.door.x, y: b.y + def.door.y + 1, facing: "down" };
-    world[b.building] = compileRoom(b.building, roomSpecs[b.building], doorFront);
+    world[b.building] = compileBuildingRoom(b, roomSpecs, secretSpecs, secrets);
+  }
+  for (const id of Object.keys(secretSpecs) as SecretRoomId[]) {
+    world[id] = compileSecretRoom(id, roomSpecs, secretSpecs);
   }
   return world;
+}
+
+/**
+ * Brings the world up to date with the secrets found: any room whose hidden staircase has now
+ * opened is compiled again, in place. Returns the ones that changed, so their pictures can be redrawn.
+ */
+export function applySecrets(
+  world: World,
+  secrets: readonly SecretId[],
+  townSpec: TownSpec = town,
+  roomSpecs: Record<RoomId, RoomSpec> = rooms,
+  secretSpecs: Record<SecretRoomId, RoomSpec> = secretRooms,
+): MapId[] {
+  const changed: MapId[] = [];
+  for (const b of townSpec.buildings) {
+    const stairs = roomSpecs[b.building].stairs;
+    if (!stairs || Boolean(world[b.building].stairsOpen) === secrets.includes(stairs.secret))
+      continue;
+    world[b.building] = compileBuildingRoom(b, roomSpecs, secretSpecs, secrets);
+    changed.push(b.building);
+  }
+  return changed;
 }

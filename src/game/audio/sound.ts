@@ -12,7 +12,10 @@ import { TRACKS, compileTrack, type CompiledTrack, type TrackId } from "./tracks
 
 const VOLUME = { master: 0.8, music: 0.5, sfx: 0.6, cries: 0.6 } as const;
 
-export type Jingle = "caught" | "evolved";
+export type Jingle = "caught" | "evolved" | "healed";
+
+/** Events that count as the visitor asking for sound; iOS only accepts some of them (`touchend`, `click`). */
+const GESTURES = ["pointerdown", "pointerup", "touchend", "click", "keydown"] as const;
 
 interface Mixer {
   ctx: AudioContext;
@@ -25,6 +28,8 @@ class Sound implements MusicPlayer {
   private mixer: Mixer | null = null;
   private enabled = false;
   private waitingForGesture = false;
+  /** The browser is showing something over the game (the print dialog), so nothing should play. */
+  private held = false;
   /** The music the game wants: it plays whenever no jingle is playing. */
   private wanted: MusicId | null = null;
   private music: { id: MusicId; sequencer: Sequencer } | null = null;
@@ -116,21 +121,29 @@ class Sound implements MusicPlayer {
   private wake(): void {
     const mixer = this.mixer ?? this.createMixer();
     if (!mixer) return;
-    void mixer.ctx.resume();
+    this.resume(mixer.ctx);
     if (!this.music && !this.jingle) this.startMusic();
+  }
+
+  /** Starts the audio again; if the browser won't yet, it waits for the visitor's next tap or key. */
+  private resume(ctx: AudioContext): void {
+    const stillStopped = () => {
+      if (this.enabled && !this.held && !document.hidden && ctx.state !== "running") {
+        this.waitForGesture();
+      }
+    };
+    ctx.resume().then(stillStopped, () => this.waitForGesture());
   }
 
   private waitForGesture(): void {
     if (this.waitingForGesture) return;
     this.waitingForGesture = true;
     const unlock = () => {
-      window.removeEventListener("pointerdown", unlock, true);
-      window.removeEventListener("keydown", unlock, true);
+      for (const type of GESTURES) window.removeEventListener(type, unlock, true);
       this.waitingForGesture = false;
       if (this.enabled) this.wake();
     };
-    window.addEventListener("pointerdown", unlock, true);
-    window.addEventListener("keydown", unlock, true);
+    for (const type of GESTURES) window.addEventListener(type, unlock, true);
   }
 
   private createMixer(): Mixer | null {
@@ -150,15 +163,19 @@ class Sound implements MusicPlayer {
     };
     this.mixer = { ctx, music: bus(VOLUME.music), sfx: bus(VOLUME.sfx), cries: bus(VOLUME.cries) };
     document.addEventListener("visibilitychange", this.onVisibility);
+    // Coming back from the back/forward cache, the audio may have been stopped in the meantime.
+    window.addEventListener("pageshow", this.onVisibility);
+    ctx.addEventListener("statechange", this.onStateChange);
     return this.mixer;
   }
 
   /** Pauses everything while the browser shows something over the game (the print dialog). */
   hold(on: boolean): void {
+    this.held = on;
     const ctx = this.mixer?.ctx;
     if (!ctx) return;
     if (on) void ctx.suspend();
-    else if (this.enabled && !document.hidden) void ctx.resume();
+    else if (this.enabled && !document.hidden) this.resume(ctx);
   }
 
   /** Nothing plays in a hidden tab. */
@@ -166,7 +183,17 @@ class Sound implements MusicPlayer {
     const ctx = this.mixer?.ctx;
     if (!ctx) return;
     if (document.hidden) void ctx.suspend();
-    else if (this.enabled) void ctx.resume();
+    else if (this.enabled && !this.held) this.resume(ctx);
+  };
+
+  /**
+   * iOS stops the audio for a phone call, Siri or another app (the context goes "interrupted"), and
+   * won't start it again until the visitor next taps or presses a key. Wait for that, then carry on.
+   */
+  private onStateChange = () => {
+    const ctx = this.mixer?.ctx;
+    if (!ctx || !this.enabled || this.held || document.hidden) return;
+    if (ctx.state !== "running") this.waitForGesture();
   };
 
   private startMusic(): void {

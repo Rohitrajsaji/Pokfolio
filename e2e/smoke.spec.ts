@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { openTitle } from "./helpers";
 
 const SHAPES = [
   { name: "small phone", width: 320, height: 568 },
@@ -32,7 +33,7 @@ for (const shape of SHAPES) {
 }
 
 test("keyboard alone gets from the title to the town", async ({ page }) => {
-  await page.goto("/");
+  await openTitle(page, "");
   await page.keyboard.press("Enter");
   await expect(page.locator(".intro-scene")).toBeVisible();
   await page.keyboard.press("Escape");
@@ -41,7 +42,7 @@ test("keyboard alone gets from the title to the town", async ({ page }) => {
 });
 
 test("the résumé is two key presses from the title and closes back to it", async ({ page }) => {
-  await page.goto("/");
+  await openTitle(page, "");
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("Enter");
   await expect(page.getByText("SUMMARY").first()).toBeVisible();
@@ -61,7 +62,7 @@ test("still works when PokeAPI is unreachable", async ({ page }) => {
   await page.route(/raw\.githubusercontent\.com\/PokeAPI/, (route) => route.abort());
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
+  await openTitle(page, "");
   await page.keyboard.press("Enter");
   await page.keyboard.press("Escape");
   await expect(page.locator(".intro-scene")).toBeHidden();
@@ -70,7 +71,7 @@ test("still works when PokeAPI is unreachable", async ({ page }) => {
 
 test("reduced motion still boots", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await page.goto("/");
+  await openTitle(page, "");
   await page.keyboard.press("Enter");
   await expect(page.locator(".intro-scene")).toBeVisible();
 });

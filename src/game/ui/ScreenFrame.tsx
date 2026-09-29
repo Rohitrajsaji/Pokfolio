@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useId, useRef, type CSSProperties, type ReactNode } from "react";
 import { sound } from "../audio/sound";
 import type { Action } from "../engine/input";
 import { useGame } from "../state/store";
@@ -18,6 +18,7 @@ export function ScreenFrame({
   initial,
   onSelect,
   onKey,
+  fit = false,
   children,
 }: {
   title: string;
@@ -28,6 +29,8 @@ export function ScreenFrame({
   onSelect?: (item: HTMLElement) => void;
   /** First say on any game button; return true to handle it. */
   onKey?: (action: Action) => boolean | void;
+  /** The content is laid out to fill the frame exactly (with `Paged` where it's long), so nothing scrolls. */
+  fit?: boolean;
   children: ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -37,6 +40,14 @@ export function ScreenFrame({
     useGame.getState().closeOverlay();
   };
   useMenuNavigation(ref, { onBack: close, initial, onSelect, onKey });
+
+  // A screen with nothing to pick still takes the keyboard's focus, on its close button.
+  useEffect(() => {
+    const frame = ref.current;
+    if (frame && !frame.querySelector("[data-nav]:not([data-measure] *)")) {
+      frame.querySelector<HTMLElement>(".screen-close")?.focus({ preventScroll: true });
+    }
+  }, []);
 
   return (
     <div
@@ -55,7 +66,11 @@ export function ScreenFrame({
           <span className="icon icon-close" aria-hidden />
         </button>
       </header>
-      <PixelScroll className="screen-scroll">{children}</PixelScroll>
+      {fit ? (
+        <div className="screen-fit">{children}</div>
+      ) : (
+        <PixelScroll className="screen-scroll">{children}</PixelScroll>
+      )}
     </div>
   );
 }

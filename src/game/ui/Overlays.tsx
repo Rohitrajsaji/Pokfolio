@@ -2,6 +2,7 @@
 
 import { useGame } from "../state/store";
 import { BattleScreen } from "./battle/BattleScreen";
+import { Cameo } from "./Cameo";
 import { DialogBox } from "./DialogBox";
 import { StartMenu } from "./StartMenu";
 
@@ -18,7 +19,7 @@ function HintBanner() {
   );
 }
 
-/** What sits on the game screen itself: the door hint, the text box, the START menu and battles. */
+/** What sits on the game screen itself: the door hint, the text box, the START menu, battles and cameos. */
 export function Overlays() {
   const overlay = useGame((state) => state.overlay);
   return (
@@ -27,6 +28,9 @@ export function Overlays() {
       {overlay?.kind === "dialog" && <DialogBox key={overlay.id} dialog={overlay.dialog} />}
       {overlay?.kind === "menu" && <StartMenu />}
       {overlay?.kind === "battle" && <BattleScreen key={overlay.id} />}
+      {overlay?.kind === "cameo" && (
+        <Cameo key={overlay.id} cameo={overlay.cameo} after={overlay.after} />
+      )}
     </>
   );
 }

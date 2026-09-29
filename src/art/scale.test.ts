@@ -39,6 +39,36 @@ describe("scaleBuffer", () => {
   });
 });
 
+describe("shrinkBuffer, keeping the commonest colour", () => {
+  const paint = (rows: string[]) => {
+    const buf = new PixelBuffer(rows[0].length, rows.length);
+    rows.forEach((row, y) =>
+      [...row].forEach((ch, x) => buf.set(x, y, ch === "a" ? "#112233" : "#aabbcc")),
+    );
+    return buf;
+  };
+  const at = (buf: PixelBuffer, x: number, y: number) => [
+    ...buf.data.subarray((y * buf.width + x) * 4, (y * buf.width + x) * 4 + 3),
+  ];
+
+  it("lets a thin stroke fade out instead of turning it into noise", () => {
+    // A 1-pixel line through the middle of each 4x4 block: the line's pixel is the middle one, the rest is plain.
+    const line = paint(["bbbb", "bbbb", "aaaa", "bbbb"]);
+    expect(at(shrinkBuffer(line, 4, "middle"), 0, 0)).toEqual([0x11, 0x22, 0x33]);
+    expect(at(shrinkBuffer(line, 4, "common"), 0, 0)).toEqual([0xaa, 0xbb, 0xcc]);
+  });
+
+  it("keeps the middle pixel when the block is split evenly", () => {
+    const halves = paint(["aabb", "aabb", "aabb", "aabb"]);
+    expect(at(shrinkBuffer(halves, 4, "common"), 0, 0)).toEqual(at(halves, 2, 2));
+  });
+
+  it("agrees with the middle-pixel version wherever each block is one flat colour", () => {
+    const big = scaleBuffer(tiles(), 4);
+    expect(shrinkBuffer(big, 4, "common")).toEqual(shrinkBuffer(big, 4, "middle"));
+  });
+});
+
 describe("shrinkBuffer", () => {
   it("undoes scaleBuffer", () => {
     const back = shrinkBuffer(scaleBuffer(tiles(), 4), 4);

@@ -5,10 +5,10 @@ import { useId, useState, type CSSProperties } from "react";
 import { TYPE_COLORS } from "@/art/palette";
 import { itemSpriteUrl } from "@/pokeapi/sprites";
 import { Sprite } from "@/ui/Sprite";
-import { useGame } from "../../state/store";
 import { fill, fillWith } from "../../text";
+import { Paged } from "../Paged";
 import { ScreenFrame } from "../ScreenFrame";
-import { MessageBox, SCREEN_LINKS } from "./parts";
+import { MessageBox } from "./parts";
 
 /** TM numbers run on from pocket to pocket: the very first skill is TM01. */
 const FIRST_TM = skills.map((_, i) =>
@@ -25,21 +25,19 @@ export const tmNumber = (pocket: number, item: number) =>
 export function BagScreen({ shop = false }: { shop?: boolean }) {
   const [pocket, setPocket] = useState(0);
   const [lines, setLines] = useState(() => (shop ? [fill(dialogue.shop.greeting)] : []));
-  const [refused, setRefused] = useState(false);
   const id = useId();
   const category = skills[pocket];
   const icon = (type: string) => itemSpriteUrl(`tm-${type}`);
-  const open = (screen: "contact" | "jobs") => useGame.getState().pushScreen({ screen });
 
   const tryToBuy = (item: string) => {
     setLines(dialogue.shop.refusal.map((line) => fillWith(line, { item })));
-    setRefused(true);
   };
 
   return (
     <ScreenFrame
       title={shop ? "POKé MART" : "BAG"}
       accent={shop ? "#3a78c8" : "#c27a2c"}
+      fit
       onSelect={(item) => {
         if (item.dataset.pocket) setPocket(Number(item.dataset.pocket));
       }}
@@ -68,10 +66,13 @@ export function BagScreen({ shop = false }: { shop?: boolean }) {
         id={`${id}-panel`}
         role="tabpanel"
         aria-labelledby={`${id}-tab-${pocket}`}
-        className="pocket-panel"
+        className="pocket-panel fill"
       >
-        <ul className="tm-list">
-          {category.skills.map((skill, i) => {
+        <Paged
+          key={pocket}
+          wrap
+          label={`${category.name} pages`}
+          blocks={category.skills.map((skill, i) => {
             const label = (
               <>
                 <Sprite src={icon(category.type)} alt="" size={24} className="tm-icon" />
@@ -81,7 +82,7 @@ export function BagScreen({ shop = false }: { shop?: boolean }) {
               </>
             );
             return (
-              <li key={skill}>
+              <div key={skill} className="tm-row">
                 {shop ? (
                   <button
                     type="button"
@@ -94,30 +95,12 @@ export function BagScreen({ shop = false }: { shop?: boolean }) {
                 ) : (
                   <span className="tm-item">{label}</span>
                 )}
-              </li>
+              </div>
             );
           })}
-        </ul>
+        />
       </div>
-      {shop && (
-        <MessageBox speaker="CLERK" lines={lines}>
-          {refused && (
-            <div className="screen-actions">
-              <button
-                type="button"
-                data-nav
-                className="screen-button"
-                onClick={() => open("contact")}
-              >
-                {SCREEN_LINKS.contact}
-              </button>
-              <button type="button" data-nav className="screen-button" onClick={() => open("jobs")}>
-                {SCREEN_LINKS.jobs}
-              </button>
-            </div>
-          )}
-        </MessageBox>
-      )}
+      {shop && <MessageBox speaker="CLERK" lines={lines}></MessageBox>}
     </ScreenFrame>
   );
 }
