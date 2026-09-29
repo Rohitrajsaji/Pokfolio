@@ -112,6 +112,13 @@ Copy an entry in `content/projects.ts` and change it:
 | `npm test`       | Run the unit and content tests once (`npm run test:watch` to watch) |
 | `npm run format` | Format everything with Prettier                                     |
 
+### Testing
+
+`npm run check` runs the typecheck, lint, unit tests and a production build. `npm run e2e` adds
+real-browser smoke tests in the Chrome installed on your machine (window shapes from a 320px
+phone to 4K, keyboard-only play, the printed résumé, PokeAPI offline, reduced motion). It builds
+the site and serves it on port 3200 itself.
+
 ## Deploying
 
 The site is fully static, so it deploys to Vercel with no configuration.
