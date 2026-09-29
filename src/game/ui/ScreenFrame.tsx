@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, type ReactNode } from "react";
+import { sound } from "../audio/sound";
 import { useGame } from "../state/store";
 import { useMenuNavigation } from "./useMenuNavigation";
 
@@ -26,7 +27,10 @@ export function ScreenFrame({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
-  const close = () => useGame.getState().closeOverlay();
+  const close = () => {
+    sound.sfx("back");
+    useGame.getState().closeOverlay();
+  };
   useMenuNavigation(ref, { onBack: close, initial, onSelect });
 
   return (

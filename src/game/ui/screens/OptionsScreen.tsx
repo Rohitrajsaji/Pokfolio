@@ -1,5 +1,6 @@
 "use client";
 
+import { sound } from "../../audio/sound";
 import { useGame } from "../../state/store";
 import { ScreenFrame } from "../ScreenFrame";
 
@@ -60,11 +61,14 @@ export function OptionsScreen() {
         label="SOUND"
         value={settings.sound ? "on" : "off"}
         options={SOUND}
-        onPick={(sound) => update({ sound: sound === "on" })}
+        onPick={(choice) => {
+          update({ sound: choice === "on" });
+          if (choice === "on" && !settings.sound) sound.sfx("confirm");
+        }}
       />
       <p className="screen-hint">
-        AUTO follows your clock. Settings are remembered in this browser; music and sound effects
-        arrive in a later update.
+        AUTO follows your clock. SOUND brings music, sound effects and POKéMON cries; it starts off.
+        Settings are remembered in this browser.
       </p>
     </ScreenFrame>
   );

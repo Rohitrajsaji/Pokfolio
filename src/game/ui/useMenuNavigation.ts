@@ -1,4 +1,5 @@
 import { useEffect, useRef, type RefObject } from "react";
+import { sound } from "../audio/sound";
 import type { Action } from "../engine/input";
 import { useInputLayer } from "./useInputLayer";
 
@@ -60,8 +61,16 @@ export function useMenuNavigation(
         select(root, item, latestOnSelect.current);
       }
     };
+    // Picking an item, by button, click or tap, makes the confirm blip.
+    const confirm = (event: MouseEvent) => {
+      if ((event.target as Element | null)?.closest("[data-nav]")) sound.sfx("confirm");
+    };
     root.addEventListener("focusin", follow);
-    return () => root.removeEventListener("focusin", follow);
+    root.addEventListener("click", confirm);
+    return () => {
+      root.removeEventListener("focusin", follow);
+      root.removeEventListener("click", confirm);
+    };
   }, [ref]);
 
   useInputLayer((action: Action) => {
@@ -85,5 +94,6 @@ export function useMenuNavigation(
     if (step === 0) return;
     const next = items[at === -1 ? 0 : (at + step + items.length) % items.length];
     select(root, next, latestOnSelect.current);
+    sound.sfx("cursor");
   });
 }

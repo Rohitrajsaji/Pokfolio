@@ -4,6 +4,7 @@ import { experience } from "@content";
 import type { Job } from "@content/types";
 import { useId, useState } from "react";
 import { formatRange } from "@/lib/dates";
+import { sound } from "../../audio/sound";
 import { useGame } from "../../state/store";
 import { ScreenFrame } from "../ScreenFrame";
 import { MonSprite, SCREEN_LINKS, TypeBadges } from "./parts";
@@ -68,7 +69,10 @@ export function PartyScreen({ job }: { job?: string }) {
       accent="#3f8f5a"
       initial={start}
       onSelect={(item) => {
-        if (item.dataset.index) setIndex(Number(item.dataset.index));
+        if (!item.dataset.index) return;
+        const selected = Number(item.dataset.index);
+        setIndex(selected);
+        sound.cry(experience[selected].mascot.dex);
       }}
     >
       <div className="browse">

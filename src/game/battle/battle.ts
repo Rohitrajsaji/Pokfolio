@@ -32,8 +32,9 @@ export interface BattleState {
   ball: Ball | null;
 }
 
-/** A one-off animation that plays as a beat starts. */
+/** A one-off animation (and sound) for when a beat starts. */
 export type Cue =
+  | "appear"
   | "send-out"
   | "partner-attack"
   | "wild-attack"
@@ -92,7 +93,7 @@ export function startState(): BattleState {
 /** "A wild ROHIT appeared!", then out comes your partner. */
 export function opening(state: BattleState): Beat[] {
   return [
-    { text: fill(battle.text.appeared), state },
+    { text: fill(battle.text.appeared), state, cue: "appear" },
     { text: fill(battle.text.go), state: { ...state, partnerOut: true }, cue: "send-out" },
   ];
 }

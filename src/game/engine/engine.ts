@@ -10,6 +10,7 @@ import { gridToBuffer } from "@/art/grid";
 import { GLOW_COLORS } from "@/art/palette";
 import { PixelBuffer } from "@/art/pixel-buffer";
 import { RED_FLOWER_FRAMES, TALL_GRASS_FRAMES, YELLOW_FLOWER_FRAMES } from "@/art/terrain";
+import type { SfxName } from "../audio/sfx";
 import { runInteraction } from "../state/interact";
 import { useGame } from "../state/store";
 import { fill } from "../text";
@@ -59,6 +60,8 @@ interface Npc extends Walker {
 export interface EngineHooks {
   /** The visitor stumbled on the wild ROHIT in the tall grass. Returns whether a battle began. */
   onEncounter(): boolean;
+  /** Plays a sound effect (silent unless the visitor turned sound on). */
+  sfx(name: SfxName): void;
   /** True while something else, like a battle, owns the screen. */
   busy(): boolean;
   reducedMotion(): boolean;
@@ -291,18 +294,24 @@ export class Engine {
         this.path = [];
         useGame.getState().say({ pages: this.map.edge.map(fill) });
       } else {
-        bumpInto(p, dir);
+        this.bump(dir);
       }
       return false;
     }
     if (this.blocked(nx, ny, p)) {
-      bumpInto(p, dir);
+      this.bump(dir);
       return false;
     }
     // Shift on a keyboard, or holding B like the handhelds' running shoes.
     const running = this.input.isHeld("run") || this.input.isHeld("b");
     beginStep(p, dir, running ? RUN_FRAMES : WALK_FRAMES);
     return true;
+  }
+
+  /** Walking into something: the bump animation, with a thud each time it starts. */
+  private bump(dir: Direction): void {
+    if (this.player.bump === 0) this.hooks.sfx("bump");
+    bumpInto(this.player, dir);
   }
 
   private onArrive(): void {
@@ -314,6 +323,7 @@ export class Engine {
     if (warp) {
       this.path = [];
       this.arrival = null;
+      this.hooks.sfx("door");
       this.startFade(() => this.enterMap(warp.to, warp));
       return;
     }
@@ -378,6 +388,7 @@ export class Engine {
     } else if (action === "start" || action === "escape") {
       this.path = [];
       this.arrival = null;
+      this.hooks.sfx("menu");
       useGame.getState().openMenu();
     }
   };

@@ -3,6 +3,7 @@
 import { profile } from "@content";
 import type { ScreenRequest } from "@content/types";
 import { useRef } from "react";
+import { sound } from "../audio/sound";
 import { useGame } from "../state/store";
 import { useMenuNavigation } from "./useMenuNavigation";
 
@@ -28,7 +29,10 @@ export const MENU_ITEMS: readonly MenuItem[] = [
 export function StartMenu() {
   const ref = useRef<HTMLDivElement>(null);
   const initial = useGame((state) => state.menuIndex);
-  const close = () => useGame.getState().closeAll();
+  const close = () => {
+    sound.sfx("back");
+    useGame.getState().closeAll();
+  };
   useMenuNavigation(ref, { onBack: close, initial });
 
   const choose = (item: MenuItem, index: number) => {

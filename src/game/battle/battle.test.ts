@@ -26,7 +26,7 @@ describe("the opening", () => {
   it("announces the wild Pokémon, then sends out your partner", () => {
     const beats = opening(startState());
     expect(texts(beats)).toEqual([fill(battle.text.appeared), fill(battle.text.go)]);
-    expect(beats[0].state.partnerOut).toBe(false);
+    expect(beats[0]).toMatchObject({ cue: "appear", state: { partnerOut: false } });
     expect(beats[1]).toMatchObject({ cue: "send-out", state: { partnerOut: true } });
   });
 });

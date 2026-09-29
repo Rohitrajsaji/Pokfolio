@@ -3,6 +3,7 @@
 import { dialogue, experience } from "@content";
 import { useEffect, useState } from "react";
 import { formatRange } from "@/lib/dates";
+import { sound } from "../../audio/sound";
 import { useGame } from "../../state/store";
 import { fill, fillWith } from "../../text";
 import { ScreenFrame } from "../ScreenFrame";
@@ -33,6 +34,13 @@ export function EvolutionScreen() {
     return () => window.clearTimeout(id);
   }, [evolving]);
 
+  // Each new form arrives with a jingle and its cry.
+  useEffect(() => {
+    if (stage === 0) return;
+    sound.playJingle("evolved");
+    sound.cry(STAGES[stage].mascot.dex, 0.2);
+  }, [stage]);
+
   const advance = () => {
     if (!next) return useGame.getState().closeOverlay();
     // Pressing A mid-evolution skips the flashing; reduced motion skips it entirely.
@@ -41,6 +49,7 @@ export function EvolutionScreen() {
       setStage(stage + 1);
       return;
     }
+    sound.sfx("evolving");
     setEvolving(true);
   };
 

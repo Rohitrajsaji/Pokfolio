@@ -4,6 +4,7 @@ import { projects } from "@content";
 import type { Project } from "@content/types";
 import { useId, useState } from "react";
 import { pokemonSpriteUrl } from "@/pokeapi/sprites";
+import { sound } from "../../audio/sound";
 import { ScreenFrame } from "../ScreenFrame";
 import { MonSprite, TypeBadges, usePreloadedImages } from "./parts";
 
@@ -92,7 +93,10 @@ export function DexScreen({ project }: { project?: string }) {
       accent="#d94b4b"
       initial={start}
       onSelect={(item) => {
-        if (item.dataset.index) setIndex(Number(item.dataset.index));
+        if (!item.dataset.index) return;
+        const selected = Number(item.dataset.index);
+        setIndex(selected);
+        sound.cry(projects[selected].mascot.dex);
       }}
     >
       <div className="browse">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { sound } from "../audio/sound";
 import { useGame, type DialogRequest } from "../state/store";
 import { useInputLayer } from "./useInputLayer";
 import { useTypewriter } from "./useTypewriter";
@@ -25,15 +26,23 @@ export function DialogBox({ dialog }: { dialog: DialogRequest }) {
   const advance = () => {
     if (!typed) return finish();
     if (asking) return;
+    sound.sfx("text");
     if (page < pages.length - 1) return setPage(page + 1);
     close(null);
   };
 
   useInputLayer((action) => {
     if (asking && typed) {
-      if (action === "up" || action === "down") setChoice((c) => (c === 0 ? 1 : 0));
-      else if (action === "a") close(choice === 0);
-      else if (action === "b" || action === "escape") close(false);
+      if (action === "up" || action === "down") {
+        sound.sfx("cursor");
+        setChoice((c) => (c === 0 ? 1 : 0));
+      } else if (action === "a") {
+        sound.sfx("confirm");
+        close(choice === 0);
+      } else if (action === "b" || action === "escape") {
+        sound.sfx("back");
+        close(false);
+      }
       return;
     }
     if (action === "a" || action === "b" || action === "escape") advance();
@@ -66,6 +75,7 @@ export function DialogBox({ dialog }: { dialog: DialogRequest }) {
               onMouseEnter={() => setChoice(i as 0 | 1)}
               onClick={(event) => {
                 event.stopPropagation();
+                sound.sfx("confirm");
                 close(i === 0);
               }}
             >

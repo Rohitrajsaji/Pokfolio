@@ -4,11 +4,11 @@ A portfolio you can play. Walk around a pixel-art town, step into buildings to r
 projects and experience, and catch the wild ROHIT in the tall grass to get in touch. Recruiters
 in a hurry can skip straight to the classic résumé at [`/resume`](http://localhost:3000/resume).
 
-> **Status:** Phases 1–6 of 8 are done: content, classic résumé, SEO, the pixel-art kit, the
-> playable town, menus, every content screen, the professor's Q&A and the catch-to-hire battle.
-> Still to come: music and sound effects, then the title screen, social image, final polish and
-> deploy. The art kit is previewable at [`/dev/sprites`](http://localhost:3000/dev/sprites)
-> while `npm run dev` is running.
+> **Status:** Phases 1–7 of 8 are done: content, classic résumé, SEO, the pixel-art kit, the
+> playable town, menus, every content screen, the professor's Q&A, the catch-to-hire battle,
+> and music, sound effects and cries. Still to come: the title screen, social image, final
+> polish and deploy. The art kit is previewable at
+> [`/dev/sprites`](http://localhost:3000/dev/sprites) while `npm run dev` is running.
 
 ### How to play
 
@@ -23,6 +23,10 @@ in a hurry can skip straight to the classic résumé at [`/resume`](http://local
 Every building opens part of the portfolio: the Lab holds the projects (Pokédex), the Career Gym
 the experience, the house the Trainer Card, the Poké Mart the skills and the Pokémon Center the
 contact details. Step into the tall grass to meet the wild ROHIT, and catch it to get in touch.
+
+Sound starts off. Turn it on with the ♪ SOUND button under the game or in OPTIONS. The music
+and sound effects are original, synthesised in the browser as the game runs; the Pokémon cries
+come from PokeAPI.
 
 ### Your in-game look
 

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { TYPE_COLORS } from "@/art/palette";
 import { itemSpriteUrl, pokemonSpriteUrl, type SpriteView } from "@/pokeapi/sprites";
 import { Sprite } from "@/ui/Sprite";
+import { sound } from "../../audio/sound";
 import {
   BALL_NAMES,
   BALLS,
@@ -57,6 +58,15 @@ const BATTLE_IMAGES = [
 ]
   .map((id) => pokemonSpriteUrl(id))
   .concat(pokemonSpriteUrl(site.partner.dex, { view: "back" }), BALLS.map(itemSpriteUrl));
+
+/** Cries worth fetching as soon as a battle starts. */
+const BATTLE_CRIES = [
+  ...new Set([
+    site.wild.dex,
+    ...skills.map((category) => formFor(category.type)),
+    site.partner.dex,
+  ]),
+];
 
 /** How the wild Pokémon and your partner move for each cue. */
 const WILD_MOTION: Partial<Record<Cue, string>> = {
@@ -234,7 +244,9 @@ function BattleText({
   const { visible, typed, finish } = useTypewriter(beat.text, id);
   const advance = () => {
     if (!typed) return finish();
-    if (!waiting) onNext();
+    if (waiting) return;
+    sound.sfx("text");
+    onNext();
   };
   useInputLayer((action) => {
     if (action === "a" || action === "b") advance();
@@ -345,6 +357,46 @@ function BagMenu({ onPick, onBack }: { onPick: (ball: Ball) => void; onBack: () 
   );
 }
 
+/** The sounds that go with each line: cries, hits, the ball and the jingle. */
+function playSounds(beat: Beat): void {
+  switch (beat.cue) {
+    case "appear":
+      sound.cry(beat.state.sprite);
+      break;
+    case "send-out":
+      sound.sfx("pop");
+      sound.cry(site.partner.dex, 0.25);
+      break;
+    case "partner-attack":
+      sound.sfx("hit", 0.3);
+      break;
+    case "wild-attack":
+      sound.sfx("hit", 0.15);
+      break;
+    case "form-change":
+      sound.sfx("shimmer");
+      sound.cry(beat.state.sprite, 0.35);
+      break;
+    case "paralyze":
+      sound.sfx("zap");
+      break;
+    case "throw":
+      sound.sfx("throw");
+      // A click per shake, in time with the ball's wobble.
+      for (let i = 0; i < (beat.shakes ?? 0); i++) {
+        sound.sfx("shake", 1.15 + (i * SHAKE_MS) / 1000);
+      }
+      break;
+    case "break-free":
+      sound.sfx("free");
+      break;
+    case "caught":
+      sound.playJingle("caught");
+      break;
+  }
+  if (beat.end === "fled") sound.sfx("flee");
+}
+
 /** The catch-to-hire battle against the wild ROHIT. */
 export function BattleScreen() {
   const reducedMotion = useReducedMotion();
@@ -357,6 +409,10 @@ export function BattleScreen() {
   const [waiting, setWaiting] = useState(false);
   const timers = useRef(new Set<number>());
   usePreloadedImages(BATTLE_IMAGES);
+
+  useEffect(() => {
+    sound.preloadCries(BATTLE_CRIES);
+  }, []);
 
   useEffect(() => {
     if (!intro) return;
@@ -374,6 +430,11 @@ export function BattleScreen() {
   const settled = beats[beats.length - 1].state;
   const beat = at < beats.length ? beats[at] : undefined;
   const view = beat?.state ?? settled;
+
+  // Each new line brings its sounds.
+  useEffect(() => {
+    if (!intro && beat) playSounds(beat);
+  }, [intro, beat]);
 
   /** A thrown ball has to finish shaking before the story can go on. */
   const waitFor = (next: Beat | undefined) => {
@@ -409,6 +470,12 @@ export function BattleScreen() {
     waitFor(beats[at + 1]);
   };
 
+  /** Leaves FIGHT or BAG for the main commands. */
+  const back = () => {
+    sound.sfx("back");
+    setMenu("commands");
+  };
+
   const pick = (choice: Command, index: number) => {
     setCommand(index);
     if (choice === "fight") setMenu("fight");
@@ -440,15 +507,9 @@ export function BattleScreen() {
           {beat ? (
             <BattleText beat={beat} id={lineId} waiting={waiting} onNext={onNext} />
           ) : menu === "fight" ? (
-            <MoveMenu
-              onPick={(move) => play(fight(settled, move))}
-              onBack={() => setMenu("commands")}
-            />
+            <MoveMenu onPick={(move) => play(fight(settled, move))} onBack={back} />
           ) : menu === "bag" ? (
-            <BagMenu
-              onPick={(ball) => play(throwBall(settled, ball))}
-              onBack={() => setMenu("commands")}
-            />
+            <BagMenu onPick={(ball) => play(throwBall(settled, ball))} onBack={back} />
           ) : (
             <CommandMenu initial={command} onPick={pick} />
           )}
