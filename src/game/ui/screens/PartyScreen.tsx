@@ -9,7 +9,7 @@ import { Sprite } from "@/ui/Sprite";
 import { sound } from "../../audio/sound";
 import { Paged } from "../Paged";
 import { ScreenFrame } from "../ScreenFrame";
-import { MonSprite, TypeBadges } from "./parts";
+import { EntryName, MonSprite, TypeBadges } from "./parts";
 
 const KINDS: Readonly<Record<Job["kind"], string>> = {
   "full-time": "Full-time",
@@ -25,7 +25,7 @@ function JobEntry({ job }: { job: Job }) {
       </div>
       <div>
         <p className="entry-kicker">{job.mascot.name}</p>
-        <h3 className="entry-name">{job.company.toUpperCase()}</h3>
+        <EntryName>{job.company.toUpperCase()}</EntryName>
         <p className="entry-kind">{job.role}</p>
         <TypeBadges types={job.mascot.types} />
       </div>
@@ -80,7 +80,7 @@ export function PartyScreen({ job }: { job?: string }) {
         sound.cry(experience[selected].mascot.dex);
       }}
     >
-      <div className="browse browse-fit">
+      <div className="browse browse-fit browse-career">
         <div className="browse-side">
           <ol className="browse-list" aria-label="Career">
             {experience.map((entry, i) => (
@@ -101,7 +101,6 @@ export function PartyScreen({ job }: { job?: string }) {
                   />
                   <span>
                     <span className="browse-name">{entry.company.toUpperCase()}</span>
-                    <span className="browse-no">{formatRange(entry.start, entry.end)}</span>
                   </span>
                 </button>
               </li>

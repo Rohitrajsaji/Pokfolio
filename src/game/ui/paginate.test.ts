@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { pageStarts, pagesOf, type Measured } from "./paginate";
+import { groups, pageStarts, pagesOf, sentenceChunks, type Measured } from "./paginate";
 
 /** Blocks of the given heights, stacked with `gap` between them. */
 function stack(heights: number[], gap = 4): Measured[] {
@@ -54,5 +54,35 @@ describe("pagesOf", () => {
   it("lists the blocks on each page", () => {
     expect(pagesOf(5, [0, 2, 4])).toEqual([[0, 1], [2, 3], [4]]);
     expect(pagesOf(3, [0])).toEqual([[0, 1, 2]]);
+  });
+});
+
+describe("sentenceChunks", () => {
+  const text =
+    "AI Engineer at UST working on agents. Experienced in modernizing apps to Next.js. Facilitates workshops! Builds custom agents?";
+
+  it("cuts only between sentences, and loses nothing", () => {
+    const chunks = sentenceChunks(text, 60);
+    expect(chunks.join(" ")).toBe(text);
+    for (const chunk of chunks) expect(/[.!?]$/.test(chunk), chunk).toBe(true);
+  });
+
+  it("keeps short sentences together up to the limit", () => {
+    expect(sentenceChunks("One. Two. Three.", 100)).toEqual(["One. Two. Three."]);
+    expect(sentenceChunks("One. Two. Three.", 9)).toEqual(["One. Two.", "Three."]);
+  });
+
+  it("leaves a single long sentence whole, and text with no full stop alone", () => {
+    const long = "A".repeat(300) + ".";
+    expect(sentenceChunks(long, 50)).toEqual([long]);
+    expect(sentenceChunks("no full stop here", 5)).toEqual(["no full stop here"]);
+    expect(sentenceChunks("", 5)).toEqual([""]);
+  });
+});
+
+describe("groups", () => {
+  it("splits a list into ordered groups", () => {
+    expect(groups([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+    expect(groups([], 3)).toEqual([]);
   });
 });

@@ -75,3 +75,38 @@ describe("screens", () => {
     expect(overlay()).toBeNull();
   });
 });
+
+describe("restart", () => {
+  it("goes back to the title with the visit forgotten, but keeps the settings and the window's size", () => {
+    const game = useGame.getState();
+    game.setView({ width: 320, height: 180 });
+    game.updateSettings({ textSpeed: "fast" });
+    game.setStage("play");
+    game.setMap("lab");
+    game.setPosition({ x: 5, y: 6 });
+    game.setMenuIndex(4);
+    game.setCaught(true);
+    game.unlock("arcade");
+    game.visit("town:3,4");
+    game.clearLevel(2);
+    game.choose({ look: "leaf", palette: "gameboy" });
+    game.openMenu();
+    const before = useGame.getState().run;
+
+    game.restart();
+
+    const now = useGame.getState();
+    expect(now.run).toBe(before + 1);
+    expect(now.stage).toBe("title");
+    expect(now.mapId).toBe("town");
+    expect(now.overlay).toBeNull();
+    expect(now.menuIndex).toBe(0);
+    expect(now.caught).toBe(false);
+    expect(now.secrets).toEqual([]);
+    expect(now.visits).toEqual({});
+    expect(now.cleared).toBe(0);
+    expect(now.cosmetics).toEqual({ look: "classic", palette: "normal" });
+    expect(now.settings.textSpeed).toBe("fast");
+    expect(now.view).toEqual({ width: 320, height: 180 });
+  });
+});

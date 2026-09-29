@@ -92,3 +92,23 @@ test("only one screen is ever open, however often the menu is used", async ({ pa
     }
   }
 });
+
+test("EXIT goes back to the title screen and starts the visit over", async ({ page }) => {
+  test.setTimeout(60_000);
+  await startGame(page);
+  await page.keyboard.press("m");
+  await page.getByRole("menuitem", { name: "EXIT", exact: true }).click();
+  // The title again, ready for PRESS START, with no menu or dialog left over.
+  await expect(page.getByRole("menuitem", { name: "PRESS START" })).toBeFocused();
+  await expect(page.locator(".start-menu")).toHaveCount(0);
+  await expect(page.locator(".screen-frame")).toHaveCount(0);
+  // And it can be played again from the top: the intro, then the town.
+  await page.keyboard.press("Enter");
+  await page.locator(".intro-scene").waitFor();
+  await page.keyboard.press("Escape");
+  await page.locator(".intro-scene").waitFor({ state: "hidden" });
+  await page.waitForTimeout(1600);
+  await closeDialogs(page);
+  await page.keyboard.press("m");
+  await expect(page.getByRole("menu", { name: "Menu" })).toBeVisible();
+});

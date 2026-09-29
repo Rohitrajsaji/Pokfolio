@@ -88,12 +88,14 @@ function BattleSprite({
   mon,
   view = "front",
   scale,
+  shiny = false,
 }: {
   mon: PokemonRef;
   view?: SpriteView;
   scale: number;
+  shiny?: boolean;
 }) {
-  const src = pokemonSpriteUrl(mon.dex, { view });
+  const src = pokemonSpriteUrl(mon.dex, { view, shiny });
   const [size, setSize] = useState(() => naturalSizes.get(src) ?? null);
   const style: CSSProperties = size
     ? {
@@ -215,7 +217,9 @@ function Scene({
             key={view.sprite}
             mon={{ ...site.wild, dex: view.sprite }}
             scale={WILD_SCALE}
+            shiny={view.shiny}
           />
+          {view.shiny && <span className="shiny-sparkle" />}
         </div>
       )}
       {view.ball && (
@@ -372,6 +376,10 @@ function playSounds(beat: Beat): void {
     case "appear":
       sound.cry(beat.state.sprite);
       break;
+    case "appear-shiny":
+      sound.sfx("shiny");
+      sound.cry(beat.state.sprite, 0.5);
+      break;
     case "send-out":
       sound.sfx("pop");
       sound.cry(site.partner.dex, 0.25);
@@ -411,7 +419,9 @@ export function BattleScreen() {
   const reducedMotion = useReducedMotion();
   const { partnerScale, partnerNumbers } = fieldFor(useGame((state) => state.view?.height ?? 180));
   const [intro, setIntro] = useState(() => !reducedMotion);
-  const [beats, setBeats] = useState<Beat[]>(() => opening(startState()));
+  const [beats, setBeats] = useState<Beat[]>(() =>
+    opening(startState(useGame.getState().secrets.includes("shiny"))),
+  );
   const [at, setAt] = useState(0);
   const [round, setRound] = useState(0);
   const [menu, setMenu] = useState<"commands" | "fight" | "bag">("commands");

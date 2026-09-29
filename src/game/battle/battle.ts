@@ -24,6 +24,8 @@ export interface BattleState {
   throws: number;
   /** Turns the wild Pokémon has taken, which picks the skill it shows off next. */
   turns: number;
+  /** Whether the wild Pokémon is shiny (a secret; see the shore route). */
+  shiny: boolean;
   /** The wild Pokémon's sprite id. Rotom changes form to match each skill category. */
   sprite: number;
   /** Whether your partner has been sent out. */
@@ -35,6 +37,7 @@ export interface BattleState {
 /** A one-off animation (and sound) for when a beat starts. */
 export type Cue =
   | "appear"
+  | "appear-shiny"
   | "send-out"
   | "partner-attack"
   | "wild-attack"
@@ -78,8 +81,9 @@ export function formFor(type: PokeType): number {
   return ROTOM_FORMS[type] ?? ROTOM;
 }
 
-export function startState(): BattleState {
+export function startState(shiny = false): BattleState {
   return {
+    shiny,
     hp: 1,
     paralyzed: false,
     throws: 0,
@@ -93,7 +97,9 @@ export function startState(): BattleState {
 /** "A wild ROHIT appeared!", then out comes your partner. */
 export function opening(state: BattleState): Beat[] {
   return [
-    { text: fill(battle.text.appeared), state, cue: "appear" },
+    state.shiny
+      ? { text: fill(battle.text.appearedShiny), state, cue: "appear-shiny" }
+      : { text: fill(battle.text.appeared), state, cue: "appear" },
     { text: fill(battle.text.go), state: { ...state, partnerOut: true }, cue: "send-out" },
   ];
 }

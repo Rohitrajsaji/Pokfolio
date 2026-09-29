@@ -54,6 +54,8 @@ export interface Cosmetics {
 export const DEFAULT_COSMETICS: Cosmetics = { look: "classic", palette: "normal" };
 
 export interface GameState {
+  /** How many times the visit has been restarted from EXIT; the game is built afresh for each. */
+  run: number;
   /** How much of the world the window shows, in game pixels. Set by the game as the window changes. */
   view: { width: number; height: number } | null;
   stage: Stage;
@@ -98,6 +100,8 @@ export interface GameState {
   /** Starts a cameo; the lines in `after` are said once it's over. */
   showCameo: (cameo: CameoId, after?: string[]) => void;
   setStage: (stage: Stage) => void;
+  /** Back to the title screen with the visit forgotten (settings and the window's size are kept). */
+  restart: () => void;
   setView: (view: { width: number; height: number }) => void;
   setMap: (mapId: MapId) => void;
   setPosition: (position: { x: number; y: number }) => void;
@@ -115,7 +119,23 @@ function isOpen(overlay: Overlay | null, request: ScreenRequest): boolean {
   return overlay?.kind === "screen" && JSON.stringify(overlay.request) === JSON.stringify(request);
 }
 
+/** How a visit begins: the title screen, in the town, with nothing found and nothing won. */
+const FRESH_VISIT = {
+  stage: "title" as Stage,
+  mapId: "town" as MapId,
+  position: { x: 0, y: 0 },
+  overlay: null,
+  menuIndex: 0,
+  hint: null,
+  caught: false,
+  secrets: [] as SecretId[],
+  visits: {},
+  cleared: 0,
+  cosmetics: DEFAULT_COSMETICS,
+};
+
 export const useGame = create<GameState>()((set, get) => ({
+  run: 0,
   view: null,
   stage: "title",
   mapId: "town",
@@ -171,6 +191,7 @@ export const useGame = create<GameState>()((set, get) => ({
   showCameo: (cameo, after) =>
     set({ overlay: { kind: "cameo", id: ++overlayCount, cameo, after } }),
   setStage: (stage) => set({ stage }),
+  restart: () => set((state) => ({ ...FRESH_VISIT, run: state.run + 1 })),
   setView: (view) =>
     set((state) =>
       state.view?.width === view.width && state.view.height === view.height ? state : { view },

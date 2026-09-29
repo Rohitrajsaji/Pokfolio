@@ -35,6 +35,7 @@ export type SfxName =
   | "evolving"
   | "glitch"
   | "unlock"
+  | "shiny"
   | "flip"
   | "boom"
   | "coin"
@@ -95,6 +96,8 @@ export const SFX: Readonly<Record<SfxName, readonly Tone[]>> = {
       delay: 0.25 + (tone.delay ?? 0),
     })),
   ],
+  // A shiny Pokémon's sparkle: a quick rising run of bright notes.
+  shiny: run([1568, 1976, 2349, 3136, 2349, 3136], 0.07, 0.3),
   // A card turning over.
   flip: [{ wave: "pulse", from: 620, to: 900, duration: 0.06, gain: 0.3 }],
   // A Voltorb going off: a burst of noise over a low thud.

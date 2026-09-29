@@ -15,6 +15,7 @@ export const battle: BattleSpec = {
   ],
   text: {
     appeared: "A wild {wild} appeared!",
+    appearedShiny: "A shiny {wild} appeared!",
     go: "Go! {partner}!",
     prompt: "What will {partner} do?",
     partnerMove: "{partner} used {move}!",

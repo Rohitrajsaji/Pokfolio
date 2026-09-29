@@ -5,7 +5,9 @@ import { useRef, useState, type ReactNode } from "react";
 import { formatRange } from "@/lib/dates";
 import type { Action } from "../../engine/input";
 import { Paged } from "../Paged";
+import { groups } from "../paginate";
 import { ScreenFrame } from "../ScreenFrame";
+import { proseBlocks } from "./parts";
 
 const TABS = [
   { id: "summary", label: "SUMMARY" },
@@ -34,12 +36,9 @@ function summaryBlocks(): ReactNode[] {
         {profile.location} · {profile.relocation}
       </p>
     </div>,
-    ...profile.summary.map((paragraph, i) => (
-      <div key={paragraph}>
-        {i === 0 && <h3 className="section-title">Summary</h3>}
-        <p className="readable">{paragraph}</p>
-      </div>
-    )),
+    ...profile.summary.flatMap((paragraph, i) =>
+      proseBlocks(`summary-${i}`, paragraph, i === 0 ? "Summary" : undefined),
+    ),
     <div key="contact">
       <h3 className="section-title">Contact</h3>
       <ul className="res-links">
@@ -58,17 +57,16 @@ function summaryBlocks(): ReactNode[] {
         </li>
       </ul>
     </div>,
-    <div key="open">
-      <h3 className="section-title">Open to</h3>
-      <p className="readable">{preferences.intro}</p>
-    </div>,
-    <ul key="roles" className="chips">
-      {preferences.roles.map((role) => (
-        <li key={role} className="chip">
-          {role}
-        </li>
-      ))}
-    </ul>,
+    ...proseBlocks("open", preferences.intro, "Open to"),
+    ...groups(preferences.roles, 4).map((roles) => (
+      <ul key={roles.join()} className="chips">
+        {roles.map((role) => (
+          <li key={role} className="chip">
+            {role}
+          </li>
+        ))}
+      </ul>
+    )),
   ];
 }
 
@@ -98,9 +96,7 @@ function projectBlocks(): ReactNode[] {
       <p className="res-title">{project.tagline}</p>
       {project.status && <p className="res-meta">{project.status}</p>}
     </div>,
-    <p key={project.id + "summary"} className="readable res-body">
-      {project.summary}
-    </p>,
+    ...proseBlocks(project.id + "-summary", project.summary),
     ...project.highlights.map((highlight, i) => (
       <div key={project.id + highlight}>
         {i === 0 && <p className="res-meta">{project.highlightsTitle}</p>}
@@ -109,29 +105,33 @@ function projectBlocks(): ReactNode[] {
         </ul>
       </div>
     )),
-    <ul key={project.id + "tags"} className="chips" aria-label="Technologies and topics">
-      {project.tags.map((tag) => (
-        <li key={tag} className="chip">
-          {tag}
-        </li>
-      ))}
-    </ul>,
+    ...groups(project.tags, 6).map((tags) => (
+      <ul key={project.id + tags.join()} className="chips" aria-label="Technologies and topics">
+        {tags.map((tag) => (
+          <li key={tag} className="chip">
+            {tag}
+          </li>
+        ))}
+      </ul>
+    )),
   ]);
 }
 
 function skillBlocks(): ReactNode[] {
-  return skills.map((category) => (
-    <div key={category.id}>
-      <h3 className="section-title">{category.name}</h3>
-      <ul className="chips res-chips">
-        {category.skills.map((skill) => (
-          <li key={skill} className="chip">
-            {skill}
-          </li>
-        ))}
-      </ul>
-    </div>
-  ));
+  return skills.flatMap((category) =>
+    groups(category.skills, 5).map((group, i) => (
+      <div key={category.id + i}>
+        {i === 0 && <h3 className="section-title">{category.name}</h3>}
+        <ul className="chips res-chips">
+          {group.map((skill) => (
+            <li key={skill} className="chip">
+              {skill}
+            </li>
+          ))}
+        </ul>
+      </div>
+    )),
+  );
 }
 
 function educationBlocks(): ReactNode[] {

@@ -70,28 +70,30 @@ export function EvolutionScreen() {
   };
 
   return (
-    <ScreenFrame title="EVOLUTION" accent="#7a55b8">
-      <div className="evo">
-        {/* Every stage is drawn up front, so the next sprite is loaded before it's needed. */}
-        <div className="evo-stage" data-evolving={evolving ? "" : undefined}>
-          {STAGES.map((job, i) => (
-            <MonSprite
-              key={job.id}
-              mon={job.mascot}
-              decorative={role(i) !== "evo-now"}
-              className={`evo-mon ${role(i)}`}
-            />
-          ))}
+    <ScreenFrame title="EVOLUTION" accent="#7a55b8" fit>
+      <div className="evo evo-fit">
+        <div className="evo-top">
+          {/* Every stage is drawn up front, so the next sprite is loaded before it's needed. */}
+          <div className="evo-stage" data-evolving={evolving ? "" : undefined}>
+            {STAGES.map((job, i) => (
+              <MonSprite
+                key={job.id}
+                mon={job.mascot}
+                decorative={role(i) !== "evo-now"}
+                className={`evo-mon ${role(i)}`}
+              />
+            ))}
+          </div>
+          <p className="evo-caption">
+            <span className="entry-kicker">
+              STAGE {stage + 1} OF {STAGES.length} · {current.mascot.name}
+            </span>
+            <span className="evo-job">
+              {current.role}, {current.company}
+            </span>
+            <span className="entry-kicker">{formatRange(current.start, current.end)}</span>
+          </p>
         </div>
-        <p className="evo-caption">
-          <span className="entry-kicker">
-            STAGE {stage + 1} OF {STAGES.length} · {current.mascot.name}
-          </span>
-          <span className="evo-job">
-            {current.role}, {current.company}
-          </span>
-          <span className="entry-kicker">{formatRange(current.start, current.end)}</span>
-        </p>
         <MessageBox lines={lines}>
           <div className="screen-actions">
             <button type="button" data-nav className="screen-button" onClick={advance}>

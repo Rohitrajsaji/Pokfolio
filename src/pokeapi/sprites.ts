@@ -11,6 +11,8 @@ export interface SpriteOptions {
   view?: SpriteView;
   /** Defaults to the site-wide `sprites.style` setting. */
   animated?: boolean;
+  /** The alternate-colour sprite. */
+  shiny?: boolean;
 }
 
 const BLACK_WHITE = "pokemon/versions/generation-v/black-white";
@@ -26,12 +28,17 @@ function assertId(id: number): void {
  */
 export function pokemonSpriteUrl(
   id: number,
-  { view = "front", animated = site.sprites.style === "animated" }: SpriteOptions = {},
+  {
+    view = "front",
+    animated = site.sprites.style === "animated",
+    shiny = false,
+  }: SpriteOptions = {},
 ): string {
   assertId(id);
   const segments = [site.sprites.baseUrl, BLACK_WHITE];
   if (animated) segments.push("animated");
   if (view === "back") segments.push("back");
+  if (shiny) segments.push("shiny");
   return `${segments.join("/")}/${id}.${animated ? "gif" : "png"}`;
 }
 

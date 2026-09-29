@@ -5,7 +5,6 @@ import { useRef, useState } from "react";
 import type { PokemonRef } from "@content/types";
 import { sound } from "../audio/sound";
 import { useGame } from "../state/store";
-import { FullscreenToggle } from "./FullscreenToggle";
 import { MonSprite } from "./screens/parts";
 import { SoundToggle } from "./SoundToggle";
 import { TownBackdrop } from "./TownBackdrop";
@@ -63,7 +62,6 @@ export function TitleScreen() {
             HELP
           </button>
           <span className="title-tools-right">
-            <FullscreenToggle />
             <SoundToggle />
           </span>
         </div>

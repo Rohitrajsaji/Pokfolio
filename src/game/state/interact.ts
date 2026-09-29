@@ -21,7 +21,8 @@ function applyEffect(effect: Effect | undefined): void {
   if (effect.jingle) sound.playJingle(effect.jingle);
   if (effect.cry !== undefined) sound.cry(effect.cry);
   if (effect.unlock) {
-    sound.sfx("unlock");
+    // The glitch that goes with a cameo makes its own noise.
+    if (!effect.cameo) sound.sfx("unlock");
     useGame.getState().unlock(effect.unlock);
   }
   if (effect.cameo) useGame.getState().showCameo(effect.cameo, effect.after);

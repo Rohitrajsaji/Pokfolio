@@ -11,6 +11,8 @@ interface MenuItem {
   label: string;
   note: string;
   request: ScreenRequest | null;
+  /** Picking it ends the visit and goes back to the title screen. */
+  restart?: boolean;
 }
 
 /** The START menu. Each entry names the game screen and what it holds. */
@@ -23,7 +25,7 @@ export const MENU_ITEMS: readonly MenuItem[] = [
   { label: "TOWN MAP", note: "Fast travel", request: { screen: "map" } },
   { label: "OPTIONS", note: "Text, time, sound", request: { screen: "options" } },
   { label: "RÉSUMÉ", note: "Full résumé", request: { screen: "resume" } },
-  { label: "EXIT", note: "Back to the town", request: null },
+  { label: "EXIT", note: "Back to the title screen", request: null, restart: true },
 ];
 
 export function StartMenu() {
@@ -39,7 +41,10 @@ export function StartMenu() {
     const game = useGame.getState();
     game.setMenuIndex(index);
     if (item.request) game.openScreen(item.request, true);
-    else close();
+    else if (item.restart) {
+      sound.sfx("back");
+      game.restart();
+    } else close();
   };
 
   return (

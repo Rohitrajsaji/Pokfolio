@@ -32,3 +32,28 @@ export function pagesOf(count: number, starts: readonly number[]): number[][] {
     return Array.from({ length: end - start }, (_, i) => start + i);
   });
 }
+
+/**
+ * Cuts a long paragraph into pieces at the ends of sentences, each about `max` characters or fewer where the
+ * sentences allow, so a page can break inside a paragraph without cutting a sentence in two.
+ */
+export function sentenceChunks(text: string, max = 110): string[] {
+  const sentences = text.split(/(?<=[.!?])\s+/).filter(Boolean);
+  const chunks: string[] = [];
+  for (const sentence of sentences) {
+    const last = chunks.length - 1;
+    if (last >= 0 && chunks[last].length + 1 + sentence.length <= max) {
+      chunks[last] += ` ${sentence}`;
+    } else {
+      chunks.push(sentence);
+    }
+  }
+  return chunks.length > 0 ? chunks : [text];
+}
+
+/** Splits a list into groups of at most `size`, in order. */
+export function groups<T>(items: readonly T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}

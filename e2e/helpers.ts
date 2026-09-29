@@ -130,7 +130,7 @@ export async function travelTo(page: Page, place: RegExp): Promise<void> {
   // The list of places is paged: turn pages until the one wanted is there.
   const wanted = page.getByRole("button", { name: place }).first();
   for (let i = 0; i < 5 && !(await wanted.isVisible().catch(() => false)); i++) {
-    await page.getByRole("button", { name: "NEXT" }).click();
+    await page.locator(".paged-bar").getByRole("button", { name: "NEXT", exact: true }).click();
   }
   await wanted.click();
   await page.waitForTimeout(1600);

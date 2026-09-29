@@ -49,6 +49,22 @@ describe("START menu", () => {
     expect(document.activeElement).toBe(screen.getAllByRole("menuitem")[3]);
   });
 
+  it("goes back to the title screen, and starts the visit over, on EXIT", () => {
+    useGame.setState({ stage: "play", mapId: "lab", secrets: ["arcade"], cleared: 2 });
+    const before = useGame.getState().run;
+    render(<StartMenu />);
+    const exit = screen.getByRole("menuitem", { name: "EXIT" });
+    expect(exit.getAttribute("aria-describedby")).toBeTruthy();
+    exit.click();
+    const now = useGame.getState();
+    expect(now.stage).toBe("title");
+    expect(now.mapId).toBe("town");
+    expect(now.secrets).toEqual([]);
+    expect(now.cleared).toBe(0);
+    expect(now.overlay).toBeNull();
+    expect(now.run).toBe(before + 1);
+  });
+
   it("closes with B", () => {
     render(<StartMenu />);
     press("b");

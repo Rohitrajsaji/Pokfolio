@@ -208,7 +208,7 @@ export interface PlayerLookSpec {
 export type Direction = "up" | "down" | "left" | "right";
 
 /** Things a visitor can discover that change the world for the rest of their visit (nothing is saved). */
-export type SecretId = "arcade";
+export type SecretId = "arcade" | "shiny";
 
 /** Short full-screen moments: a Pokémon popping out of something, a glitch. */
 export type CameoId = "rotom" | "missingno";
@@ -386,6 +386,8 @@ export interface BattleSpec {
   moves: BattleMove[];
   text: {
     appeared: string;
+    /** Said instead when the wild Pokémon is shiny. */
+    appearedShiny: string;
     go: string;
     prompt: string;
     /** {move} */

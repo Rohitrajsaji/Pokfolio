@@ -34,6 +34,9 @@ class Sound implements MusicPlayer {
   private wanted: MusicId | null = null;
   private music: { id: MusicId; sequencer: Sequencer } | null = null;
   private jingle: Sequencer | null = null;
+  /** The cry sounding now, and a count of cries asked for, so a late one can tell it has been overtaken. */
+  private cryNow: { source: AudioBufferSourceNode; gain: GainNode } | null = null;
+  private cryAsked = 0;
   private readonly tracks = new Map<TrackId, CompiledTrack>();
   private readonly cries = new Map<number, Promise<AudioBuffer | null>>();
 
@@ -63,6 +66,9 @@ class Sound implements MusicPlayer {
     if (!mixer) return;
     this.stopMusic(0.1);
     this.jingle?.stop(0.05);
+    // A new tune drowns out whatever cry was still going, and any cry still on its way.
+    this.stopCry();
+    this.cryAsked++;
     const jingle = new Sequencer(mixer.ctx, mixer.music, this.track(id), () => {
       if (this.jingle !== jingle) return;
       this.jingle = null;
@@ -82,13 +88,39 @@ class Sound implements MusicPlayer {
   cry(id: number, delay = 0): void {
     const mixer = this.ready();
     if (!mixer) return;
+    // The newest cry wins: the one sounding stops at once, and one still loading is dropped.
+    this.stopCry();
+    const asked = ++this.cryAsked;
     void this.loadCry(mixer.ctx, id).then((buffer) => {
-      if (!buffer || !this.ready()) return;
+      if (!buffer || !this.ready() || asked !== this.cryAsked) return;
       const source = mixer.ctx.createBufferSource();
+      const gain = mixer.ctx.createGain();
       source.buffer = buffer;
-      source.connect(mixer.cries);
+      source.connect(gain);
+      gain.connect(mixer.cries);
+      const now = { source, gain };
+      this.cryNow = now;
+      source.onended = () => {
+        if (this.cryNow === now) this.cryNow = null;
+      };
       source.start(mixer.ctx.currentTime + delay);
     });
+  }
+
+  /** Cuts off the cry that's sounding, with a fade too short to hear as one, so it doesn't click. */
+  private stopCry(): void {
+    const now = this.cryNow;
+    const ctx = this.mixer?.ctx;
+    this.cryNow = null;
+    if (!now || !ctx) return;
+    const end = ctx.currentTime + 0.03;
+    now.gain.gain.setValueAtTime(now.gain.gain.value, ctx.currentTime);
+    now.gain.gain.linearRampToValueAtTime(0, end);
+    try {
+      now.source.stop(end);
+    } catch {
+      // It had already finished.
+    }
   }
 
   /** Starts fetching cries now, so they're ready when they're needed. */

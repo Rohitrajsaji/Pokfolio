@@ -169,6 +169,12 @@ describe("effects", () => {
     expect(sound.sfx).toHaveBeenCalledWith("unlock");
   });
 
+  it("leave the chime out when a cameo makes its own noise", () => {
+    runInteraction({ effect: { unlock: "shiny", cameo: "missingno" } });
+    expect(sound.sfx).not.toHaveBeenCalledWith("unlock");
+    expect(useGame.getState().secrets).toContain("shiny");
+  });
+
   it("wait for YES when the visitor was asked", () => {
     const interaction = {
       lines: ["A switch."],

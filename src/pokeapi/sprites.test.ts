@@ -18,6 +18,14 @@ describe("pokemonSpriteUrl", () => {
     expect(pokemonSpriteUrl(25, { view: "back", animated: false })).toBe(`${BW}/back/25.png`);
   });
 
+  it("builds shiny sprites, front and back", () => {
+    expect(pokemonSpriteUrl(479, { shiny: true })).toBe(`${BW}/animated/shiny/479.gif`);
+    expect(pokemonSpriteUrl(479, { shiny: true, view: "back" })).toBe(
+      `${BW}/animated/back/shiny/479.gif`,
+    );
+    expect(pokemonSpriteUrl(479, { shiny: true, animated: false })).toBe(`${BW}/shiny/479.png`);
+  });
+
   it("supports alternate-form ids such as Heat Rotom", () => {
     expect(pokemonSpriteUrl(10008)).toBe(`${BW}/animated/10008.gif`);
   });

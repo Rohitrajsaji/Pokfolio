@@ -51,6 +51,27 @@ afterEach(() => {
   input.releaseAll();
 });
 
+describe("a shiny encounter", () => {
+  it("shows the shiny sprite and says a shiny one appeared, once the secret is found", () => {
+    cleanup();
+    useGame.setState({ secrets: ["shiny"] });
+    render(<BattleScreen />);
+    expect(line()).toBe(fill(battle.text.appearedShiny));
+    expect(document.querySelector(".battle-wild .battle-sprite")?.getAttribute("src")).toContain(
+      "/shiny/",
+    );
+    expect(document.querySelector(".battle-wild .shiny-sparkle")).not.toBeNull();
+    useGame.setState({ secrets: [] });
+  });
+
+  it("is an ordinary encounter otherwise", () => {
+    expect(
+      document.querySelector(".battle-wild .battle-sprite")?.getAttribute("src"),
+    ).not.toContain("/shiny/");
+    expect(document.querySelector(".shiny-sparkle")).toBeNull();
+  });
+});
+
 describe("the battle", () => {
   it("opens with the wild encounter, then asks what to do", () => {
     expect(line()).toBe(fill(battle.text.appeared));

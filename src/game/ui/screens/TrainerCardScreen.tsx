@@ -2,9 +2,11 @@
 
 import { experience, profile } from "@content";
 import { formatRange, formatYearMonth } from "@/lib/dates";
+import { useGame } from "../../state/store";
 import { Paged } from "../Paged";
 import { ScreenFrame } from "../ScreenFrame";
-import { AvatarPortrait } from "./parts";
+import { NARROW_BELOW } from "../../view";
+import { AvatarPortrait, proseBlocks } from "./parts";
 
 /** A five-digit trainer ID worked out from the name, so it never changes. */
 export function trainerId(name: string): string {
@@ -39,9 +41,11 @@ const FACTS: ReadonlyArray<readonly [string, string]> = [
 
 /** The TRAINER CARD: who Rohit is, at a glance. */
 export function TrainerCardScreen() {
-  // The first few facts sit beside the portrait; the rest each take their own place in the pages.
-  const beside = FACTS.slice(0, 3);
-  const facts = FACTS.slice(3);
+  // On a wide screen the first few facts sit beside the portrait; on a narrow one it's too tall for that,
+  // so the portrait is on its own and every fact takes its own place in the pages.
+  const narrow = useGame((state) => (state.view?.width ?? 320) < NARROW_BELOW);
+  const beside = narrow ? [] : FACTS.slice(0, 3);
+  const facts = narrow ? FACTS : FACTS.slice(3);
   const blocks = [
     <div key="head" className="card-head">
       <div className="trainer-card">
@@ -50,14 +54,16 @@ export function TrainerCardScreen() {
           <span>{profile.name.toUpperCase()}</span>
         </p>
         <div className="card-body">
-          <dl className="card-facts">
-            {beside.map(([label, value]) => (
-              <div key={label} className="card-fact">
-                <dt>{label}</dt>
-                <dd>{value}</dd>
-              </div>
-            ))}
-          </dl>
+          {beside.length > 0 && (
+            <dl className="card-facts">
+              {beside.map(([label, value]) => (
+                <div key={label} className="card-fact">
+                  <dt>{label}</dt>
+                  <dd>{value}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
           <AvatarPortrait className="card-portrait" />
         </div>
       </div>
@@ -70,12 +76,9 @@ export function TrainerCardScreen() {
         </div>
       </dl>
     )),
-    ...profile.summary.map((paragraph, index) => (
-      <div key={paragraph}>
-        {index === 0 && <h3 className="section-title">ABOUT</h3>}
-        <p className="readable">{paragraph}</p>
-      </div>
-    )),
+    ...profile.summary.flatMap((paragraph, index) =>
+      proseBlocks(`about-${index}`, paragraph, index === 0 ? "ABOUT" : undefined),
+    ),
   ];
   return (
     <ScreenFrame title="TRAINER CARD" accent="#c24f7d" fit>

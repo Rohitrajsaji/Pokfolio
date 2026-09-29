@@ -7,7 +7,8 @@ import { pokemonSpriteUrl } from "@/pokeapi/sprites";
 import { sound } from "../../audio/sound";
 import { Paged } from "../Paged";
 import { ScreenFrame } from "../ScreenFrame";
-import { MonSprite, TypeBadges, usePreloadedImages } from "./parts";
+import { groups } from "../paginate";
+import { EntryName, MonSprite, TypeBadges, proseBlocks, usePreloadedImages } from "./parts";
 
 const dexNumber = (index: number) => `No. ${String(index + 1).padStart(3, "0")}`;
 const MASCOT_SPRITES = projects.map((project) => pokemonSpriteUrl(project.mascot.dex));
@@ -23,15 +24,13 @@ function DexEntry({ project, index }: { project: Project; index: number }) {
         <p className="entry-kicker">
           {dexNumber(index)} · {mascot.name}
         </p>
-        <h3 className="entry-name">{project.name.toUpperCase()}</h3>
+        <EntryName>{project.name.toUpperCase()}</EntryName>
         <p className="entry-kind">{project.tagline}</p>
         <TypeBadges types={mascot.types} />
         {project.status && <p className="entry-status">STATUS · {project.status.toUpperCase()}</p>}
       </div>
     </div>,
-    <p key="summary" className="readable">
-      {project.summary}
-    </p>,
+    ...proseBlocks("summary", project.summary),
     ...project.highlights.map((highlight, i) => (
       <div key={highlight}>
         {i === 0 && <h4 className="section-title">{project.highlightsTitle.toUpperCase()}</h4>}
@@ -40,13 +39,15 @@ function DexEntry({ project, index }: { project: Project; index: number }) {
         </ul>
       </div>
     )),
-    <ul key="tags" className="chips" aria-label="Tags">
-      {project.tags.map((tag) => (
-        <li key={tag} className="chip">
-          {tag}
-        </li>
-      ))}
-    </ul>,
+    ...groups(project.tags, 6).map((tags) => (
+      <ul key={tags.join()} className="chips" aria-label="Tags">
+        {tags.map((tag) => (
+          <li key={tag} className="chip">
+            {tag}
+          </li>
+        ))}
+      </ul>
+    )),
   ];
   if (links && (links.github || links.demo)) {
     blocks.push(

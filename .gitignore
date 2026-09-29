@@ -43,3 +43,9 @@ next-env.d.ts
 # playwright
 test-results/
 playwright-report/
+
+# promo video working files
+promo/clips/
+promo/out/
+promo/probe/
+promo/*.log

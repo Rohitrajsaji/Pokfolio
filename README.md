@@ -49,6 +49,8 @@ all plain content, so you can reword or move them:
   from the Nth time it is talked to; `effect` can unlock a secret, play a cry or a jingle, or start a
   cameo (a Pokémon in the TV, a screen glitch).
 - `routes` in the town spec sets off an effect when the visitor walks a line of tiles in one go.
+  The pond-shore glitch also unlocks the `shiny` secret: for the rest of that visit every wild ROHIT
+  is shiny (official shiny sprite, sparkle, chime and "A shiny ROHIT appeared!").
 - `content/cosmetics.ts` lists the trainer looks and screen palettes, and `content/dialogue.ts` holds
   the Voltorb Flip and prize text.
 
@@ -152,6 +154,24 @@ Without GitHub, the Vercel CLI works from this folder: `npx vercel` makes a prev
 
 Once it's live, paste the address into a link preview, such as LinkedIn's Post Inspector, to see
 the share image.
+
+## Security and traffic
+
+The site is fully static: no server code, database, accounts, forms or cookies, and no secrets in
+the repo, so there is nothing of ours to attack or to rate-limit. Being static, Vercel serves it from
+its CDN, which handles any number of visitors and has platform-level DDoS protection. The only outside
+requests are each visitor's own, to PokeAPI's sprites and cries on GitHub (cries are fetched once and kept).
+
+- `next.config.ts` sends a Content-Security-Policy (only the site itself and
+  `raw.githubusercontent.com` for sprites), `frame-ancestors 'none'`, `nosniff`, a strict referrer
+  policy, a permissions policy that turns off camera, microphone and location, HSTS, and no
+  `X-Powered-By`. `e2e/security.spec.ts` checks all of it, and that the game runs without the
+  policy blocking anything.
+- Scripts are allowed inline (a static page can't carry a per-request nonce), which is the trade-off
+  Next.js documents for static sites.
+- `/dev/sprites` (the art preview) answers 404 in production.
+- Run `npm audit` before each deploy; it currently reports 0 vulnerabilities.
+- Vercel's dashboard also offers a firewall with rate limits if the site ever needs one.
 
 ## Credits
 

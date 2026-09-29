@@ -4,6 +4,7 @@ import { profile, site } from "@content";
 import type { PokemonRef, PokeType, ScreenRequest } from "@content/types";
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   type CSSProperties,
   type ReactEventHandler,
@@ -13,6 +14,7 @@ import { avatarLook } from "@/art/characters";
 import { paintBuffer } from "@/art/canvas";
 import { TYPE_COLORS } from "@/art/palette";
 import { PORTRAIT_HEIGHT, PORTRAIT_WIDTH, portraitBuffer } from "@/art/portrait";
+import { sentenceChunks } from "../paginate";
 import { pokemonSpriteUrl } from "@/pokeapi/sprites";
 import { Sprite } from "@/ui/Sprite";
 
@@ -124,4 +126,45 @@ export function AvatarPortrait({ className }: { className?: string }) {
       aria-label={`${profile.name} as a pixel-art trainer`}
     />
   );
+}
+
+/**
+ * An entry's name in the big lettering on one line, or, if it's too long for the room, the smaller lettering
+ * (which may wrap). It measures itself, so it follows the window and whatever the name is.
+ */
+export function EntryName({ children }: { children: string }) {
+  const ref = useRef<HTMLHeadingElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      el.removeAttribute("data-small");
+      if (el.scrollWidth > el.clientWidth) el.setAttribute("data-small", "");
+    };
+    fit();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(fit);
+    if (el.parentElement) observer.observe(el.parentElement);
+    return () => observer.disconnect();
+  }, [children]);
+  return (
+    <h3 ref={ref} className="entry-name">
+      {children}
+    </h3>
+  );
+}
+
+/**
+ * A paragraph as blocks for a paged screen: cut at the ends of sentences, so a page can break inside it. The
+ * first block carries the section title, if there is one, so the title never sits alone at the foot of a page.
+ */
+export function proseBlocks(key: string, text: string, title?: string): ReactNode[] {
+  const chunks = sentenceChunks(text);
+  return chunks.map((chunk, i) => (
+    <div key={`${key}-${i}`} className={i > 0 ? "chunk-cont" : undefined}>
+      {i === 0 && title && <h3 className="section-title">{title}</h3>}
+      {/* The space at the end of each piece but the last keeps the paragraph whole for a screen reader. */}
+      <p className="readable">{i < chunks.length - 1 ? `${chunk} ` : chunk}</p>
+    </div>
+  ));
 }

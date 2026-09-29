@@ -193,6 +193,8 @@ export const town: TownSpec = {
       id: "shore",
       tiles: [14, 15, 16, 17, 18, 19, 20, 21].map((x) => ({ x, y: 13 })),
       effect: {
+        // After the glitch, every wild ROHIT this visit is shiny.
+        unlock: "shiny",
         cameo: "missingno",
         after: [
           "Whoa! The whole screen scrambled for a second!",

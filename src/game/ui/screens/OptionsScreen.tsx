@@ -1,7 +1,6 @@
 "use client";
 
 import { sound } from "../../audio/sound";
-import { toggleFullscreen, useFullscreen } from "../../fullscreen";
 import { useGame } from "../../state/store";
 import { Paged } from "../Paged";
 import { ScreenFrame } from "../ScreenFrame";
@@ -47,7 +46,6 @@ const SOUND = ["off", "on"] as const;
 export function OptionsScreen() {
   const settings = useGame((state) => state.settings);
   const update = useGame((state) => state.updateSettings);
-  const screen = useFullscreen();
   // The prizes page only shows once there's a prize to see: it would give the hidden Game Corner away.
   const wonSomething = useGame((state) => state.cleared > 0);
   return (
@@ -79,19 +77,6 @@ export function OptionsScreen() {
               if (choice === "on" && !settings.sound) sound.sfx("confirm");
             }}
           />,
-          ...(screen.available
-            ? [
-                <Choice
-                  key="fullscreen"
-                  label="FULLSCREEN"
-                  value={screen.on ? "on" : "off"}
-                  options={SOUND}
-                  onPick={(choice) => {
-                    if ((choice === "on") !== screen.on) void toggleFullscreen();
-                  }}
-                />,
-              ]
-            : []),
           <div key="actions" className="screen-actions">
             {wonSomething && (
               <button

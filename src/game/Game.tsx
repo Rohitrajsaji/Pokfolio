@@ -38,6 +38,8 @@ export function Game() {
   const engineRef = useRef<Engine | null>(null);
   const regionRef = useRef<HTMLDivElement>(null);
   const stage = useGame((state) => state.stage);
+  // EXIT starts the visit again: the game (and its world) is built afresh.
+  const run = useGame((state) => state.run);
   const palette = useGame((state) => state.cosmetics.palette);
   const [view, setView] = useState<View | null>(null);
   const viewRef = useRef<View | null>(null);
@@ -140,7 +142,7 @@ export function Game() {
       useGame.setState({ travel: null });
       engineRef.current = null;
     };
-  }, []);
+  }, [run]);
 
   return (
     <div

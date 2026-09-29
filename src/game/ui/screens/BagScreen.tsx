@@ -78,7 +78,6 @@ export function BagScreen({ shop = false }: { shop?: boolean }) {
                 <Sprite src={icon(category.type)} alt="" size={24} className="tm-icon" />
                 <span className="tm-no">{tmNumber(pocket, i)}</span>
                 <span className="tm-name">{skill}</span>
-                {shop && <span className="tm-price">PRICELESS</span>}
               </>
             );
             return (

@@ -31,6 +31,16 @@ describe("the opening", () => {
   });
 });
 
+describe("a shiny opening", () => {
+  it("says so, with its own cue, and keeps the wild Pokémon shiny", () => {
+    const beats = opening(startState(true));
+    expect(texts(beats)).toEqual([fill(battle.text.appearedShiny), fill(battle.text.go)]);
+    expect(beats[0]).toMatchObject({ cue: "appear-shiny", state: { shiny: true } });
+    expect(last(beats).state.shiny).toBe(true);
+    expect(startState().shiny).toBe(false);
+  });
+});
+
 describe("FIGHT", () => {
   it("wears the wild Pokémon down, but it never faints", () => {
     let state = ready();

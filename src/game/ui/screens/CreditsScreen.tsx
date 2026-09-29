@@ -4,6 +4,7 @@ import { dialogue, site } from "@content";
 import { fill } from "../../text";
 import { Paged } from "../Paged";
 import { ScreenFrame } from "../ScreenFrame";
+import { proseBlocks } from "./parts";
 
 /** CREDITS: who made what, and the fan disclaimer. */
 export function CreditsScreen() {
@@ -13,15 +14,8 @@ export function CreditsScreen() {
       <Paged
         label="Credits pages"
         blocks={[
-          ...dialogue.credits.lines.map((line) => (
-            <p key={line} className="readable">
-              {fill(line)}
-            </p>
-          )),
-          <div key="note">
-            <h3 className="section-title">Please note</h3>
-            <p className="readable">{site.disclaimer}</p>
-          </div>,
+          ...dialogue.credits.lines.flatMap((line, i) => proseBlocks(`line-${i}`, fill(line))),
+          ...proseBlocks("note", site.disclaimer, "Please note"),
           <div key="link" className="screen-actions">
             <a
               data-nav

@@ -113,6 +113,18 @@ function sourceFiles(dir: string): string[] {
   });
 }
 
+describe("the battle's start", () => {
+  it("flashes the wild Pokémon in on its platform, without sliding anything in from the side", () => {
+    expect(css).not.toMatch(/battle-enter/);
+    const intro = [...css.matchAll(/\.battle\[data-intro\][^{]*\{([^}]*)\}/g)].map((m) => m[1]);
+    expect(intro.length).toBeGreaterThan(0);
+    for (const rules of intro) expect(rules).not.toMatch(/translate/);
+    expect(css).toMatch(/\.battle\[data-intro\] \.battle-wild \{[^}]*animation: partner-sent/);
+    // The platform is simply there.
+    expect(css).not.toMatch(/\.battle\[data-intro\] \.battle-platform/);
+  });
+});
+
 describe("the game's text", () => {
   it("sticks to symbols the pixel font can draw", () => {
     // Arrows, ticks and notes come from icons (see game.css), not from characters.

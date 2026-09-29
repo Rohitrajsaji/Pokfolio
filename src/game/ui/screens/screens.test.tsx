@@ -329,6 +329,14 @@ describe("HELP and CREDITS", () => {
     expect(link.getAttribute("rel")).toContain("noopener");
   });
 
+  it("OPTIONS has the settings and no FULLSCREEN choice", () => {
+    open({ screen: "options" });
+    for (const name of ["TEXT SPEED", "TIME OF DAY", "SOUND"]) {
+      expect(screen.getAllByRole("group", { name }).length).toBeGreaterThan(0);
+    }
+    expect(screen.queryByRole("group", { name: "FULLSCREEN" })).toBeNull();
+  });
+
   it("OPTIONS leads to both", () => {
     open({ screen: "options" });
     fireEvent.click(screen.getByRole("button", { name: "HELP" }));
