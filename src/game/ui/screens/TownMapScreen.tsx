@@ -4,11 +4,10 @@ import { site, town } from "@content";
 import { useEffect, useRef, useState } from "react";
 import { BUILDINGS } from "@/art/buildings";
 import { paintBuffer } from "@/art/canvas";
-import { PixelBuffer } from "@/art/pixel-buffer";
 import { TILE } from "@/art/terrain";
 import { useGame } from "../../state/store";
 import { fill } from "../../text";
-import { buildWorld } from "../../world/compile";
+import { townPicture } from "../../world/picture";
 import type { MapId, Spot } from "../../world/runtime";
 import { ScreenFrame } from "../ScreenFrame";
 
@@ -57,16 +56,6 @@ function destinations(): Destination[] {
   return places;
 }
 
-let townPicture: PixelBuffer | null = null;
-function picture(): PixelBuffer {
-  if (!townPicture) {
-    const map = buildWorld().town;
-    townPicture = new PixelBuffer(map.width * TILE, map.height * TILE);
-    map.paint(townPicture, false);
-  }
-  return townPicture;
-}
-
 const percent = (tile: number, of: number) => `${((tile + 0.5) / of) * 100}%`;
 
 export function TownMapScreen() {
@@ -79,7 +68,7 @@ export function TownMapScreen() {
   const height = town.ground.length;
 
   useEffect(() => {
-    if (canvasRef.current) paintBuffer(canvasRef.current, picture());
+    if (canvasRef.current) paintBuffer(canvasRef.current, townPicture());
   }, []);
 
   const go = (place: Destination) => {

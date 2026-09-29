@@ -29,6 +29,9 @@ export type Overlay =
   /** The catch-to-hire battle in the tall grass. */
   | { kind: "battle"; id: number };
 
+/** Where the visit is: the title screen, the short intro, or the game itself. */
+export type Stage = "title" | "intro" | "play";
+
 export type TextSpeed = "slow" | "normal" | "fast" | "instant";
 
 export interface Settings {
@@ -40,6 +43,7 @@ export interface Settings {
 export const DEFAULT_SETTINGS: Settings = { textSpeed: "normal", time: "auto", sound: false };
 
 export interface GameState {
+  stage: Stage;
   mapId: MapId;
   position: { x: number; y: number };
   overlay: Overlay | null;
@@ -63,6 +67,7 @@ export interface GameState {
   /** Opens a screen from inside the current one; closing it comes back here. */
   pushScreen: (request: ScreenRequest) => void;
   startBattle: () => void;
+  setStage: (stage: Stage) => void;
   setMap: (mapId: MapId) => void;
   setPosition: (position: { x: number; y: number }) => void;
   setMenuIndex: (index: number) => void;
@@ -75,6 +80,7 @@ export interface GameState {
 let overlayCount = 0;
 
 export const useGame = create<GameState>()((set) => ({
+  stage: "title",
   mapId: "town",
   position: { x: 0, y: 0 },
   overlay: null,
@@ -107,6 +113,7 @@ export const useGame = create<GameState>()((set) => ({
       },
     })),
   startBattle: () => set({ overlay: { kind: "battle", id: ++overlayCount } }),
+  setStage: (stage) => set({ stage }),
   setMap: (mapId) => set({ mapId, hint: null }),
   setPosition: (position) => set({ position }),
   setMenuIndex: (menuIndex) => set({ menuIndex }),

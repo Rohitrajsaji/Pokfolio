@@ -226,13 +226,19 @@ body {
   cursor: pointer;
 }
 
+/* The note is drawn here, not in the text, so the button's name matches what's read out. */
+.sound-toggle::before {
+  content: "♪";
+  margin-right: 0.4em;
+}
+
 .sound-toggle:hover,
 .sound-toggle:focus-visible {
   border-color: rgb(255 255 255 / 0.55);
   color: #ffffff;
 }
 
-.sound-toggle[aria-pressed="true"] {
+.sound-toggle[data-on] {
   border-color: rgb(242 201 76 / 0.6);
   color: #f2c94c;
 }
@@ -346,6 +352,63 @@ body {
 .pad-b {
   margin-top: 22px;
   background: #d9a13b;
+}
+
+/* Narrow phones (360px, 375px, 320px): START gets a row of its own, so nothing is pushed off the edge. */
+@media (max-width: 389px) {
+  .touch-controls {
+    grid-template-columns: 1fr auto;
+  }
+
+  .pad-start {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+/* A phone held sideways: the pad goes either side of the screen, like a handheld. */
+@media (pointer: coarse) and (orientation: landscape) and (max-height: 520px) {
+  .game {
+    display: grid;
+    grid-template-columns: 1fr minmax(0, calc((100dvh - 130px) * 4 / 3)) 1fr;
+    align-items: center;
+    column-gap: 8px;
+    max-width: none;
+    min-width: 0;
+  }
+
+  .game-screen {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .game-bar {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  /* The pad's parts become grid items of .game, on either side of the screen. */
+  .touch-controls {
+    display: contents;
+  }
+
+  .dpad {
+    grid-column: 1;
+    grid-row: 1;
+    justify-self: center;
+  }
+
+  .ab {
+    grid-column: 3;
+    grid-row: 1;
+    justify-self: center;
+  }
+
+  .pad-start {
+    grid-column: 3;
+    grid-row: 2;
+    justify-self: center;
+  }
 }
 
 /* ---------------------------------------------------------------- START menu */
@@ -1911,6 +1974,187 @@ a.gear-value {
   filter: brightness(1.12);
 }
 
+/* ---------------------------------------------------------------- title and intro */
+
+/* These cover the game screen. Each fades in from black, and out to it when it ends. */
+.stage-screen {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  overflow: hidden;
+  background: linear-gradient(#9bd4f2, #cbe6a8);
+}
+
+.stage-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #000000;
+  pointer-events: none;
+  animation: stage-in 0.4s ease-out both;
+}
+
+.stage-screen[data-leaving]::after {
+  animation: stage-out 0.3s ease-in both;
+}
+
+@keyframes stage-in {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes stage-out {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.town-backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+
+/* Darkest behind the words, so they read against the busy town. */
+.stage-shade {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 46%, rgb(10 14 30 / 0.78), rgb(10 14 30 / 0.34) 72%);
+}
+
+/* The intro has a portrait to show off, so its backdrop sits further back. */
+.intro-scene .stage-shade {
+  background: radial-gradient(ellipse at 50% 40%, rgb(10 14 30 / 0.86), rgb(10 14 30 / 0.58) 80%);
+}
+
+.title-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2.4cqw;
+  padding: 3cqw;
+  text-align: center;
+}
+
+/* The logo's outline and shadow are in em, so they scale with the letters. */
+.title-logo {
+  font-size: clamp(22px, 8.2cqw, 84px);
+  line-height: 1;
+  letter-spacing: 0.03em;
+  text-shadow:
+    0.06em 0 #2a4f9b,
+    -0.06em 0 #2a4f9b,
+    0 0.06em #2a4f9b,
+    0 -0.06em #2a4f9b,
+    0.06em 0.06em #2a4f9b,
+    -0.06em 0.06em #2a4f9b,
+    0.06em -0.06em #2a4f9b,
+    -0.06em -0.06em #2a4f9b,
+    0 0.12em #152a55;
+}
+
+.title-version {
+  padding: 0.5cqw 3cqw;
+  border: max(2px, 0.5cqw) solid #ffffff;
+  border-radius: 999px;
+  background: #d94b4b;
+  color: #ffffff;
+  font-size: clamp(11px, 3.3cqw, 26px);
+  letter-spacing: 0.1em;
+  text-shadow: 0.2cqw 0.2cqw 0 rgb(0 0 0 / 0.3);
+}
+
+.title-mons {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8cqw;
+}
+
+.title-mon {
+  width: 24cqw;
+  height: 24cqw;
+  animation: title-bob 1.8s ease-in-out infinite;
+}
+
+.title-mon:last-child {
+  animation-delay: -0.9s;
+}
+
+@keyframes title-bob {
+  50% {
+    transform: translateY(-1.4cqw);
+  }
+}
+
+.title-start {
+  margin-top: 1cqw;
+  padding: 0.5cqw 2cqw;
+  border-radius: 1cqw;
+  color: #ffffff;
+  font: inherit;
+  font-size: clamp(14px, 4.2cqw, 34px);
+  letter-spacing: 0.14em;
+  text-shadow: 0.3cqw 0.3cqw 0 #152a55;
+  cursor: pointer;
+  animation: title-blink 1.2s steps(1) infinite;
+}
+
+.title-start:focus-visible {
+  outline: max(2px, 0.5cqw) solid #f2c94c;
+  outline-offset: 0.6cqw;
+}
+
+@keyframes title-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.intro-portrait {
+  position: absolute;
+  top: 7cqw;
+  left: 50%;
+  width: 28cqw;
+  height: 35cqw;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 1.4cqw 0 rgb(0 0 0 / 0.28));
+}
+
+.intro-skip {
+  position: absolute;
+  top: 2.5cqw;
+  right: 2.5cqw;
+  padding: 0.6cqw 2.4cqw;
+  border: max(2px, 0.4cqw) solid #ffffff;
+  border-radius: 999px;
+  background: rgb(10 14 30 / 0.6);
+  color: #ffffff;
+  font: inherit;
+  font-size: clamp(11px, 2.6cqw, 20px);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.intro-skip:hover,
+.intro-skip:focus-visible {
+  outline: none;
+  background: #ffffff;
+  color: #152a55;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .screen-frame,
   .hint-banner,
@@ -1928,5 +2172,14 @@ a.gear-value {
 
   .hp-fill {
     transition: none;
+  }
+
+  .stage-screen::after {
+    display: none;
+  }
+
+  .title-mon,
+  .title-start {
+    animation: none;
   }
 }

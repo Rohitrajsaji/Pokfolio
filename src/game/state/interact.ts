@@ -1,3 +1,4 @@
+import { dialogue } from "@content";
 import type { Interaction } from "@content/types";
 import { fill } from "../text";
 import { useGame } from "./store";
@@ -30,4 +31,11 @@ export function runInteraction(interaction: Interaction, speaker?: string): void
   }
   if (pages.length === 0) return proceed();
   say({ pages, speaker: name, onClose: proceed });
+}
+
+/** Ends the title and the intro: the adventure begins, and the controls are explained. */
+export function beginAdventure(): void {
+  const game = useGame.getState();
+  game.setStage("play");
+  game.say({ pages: dialogue.welcome.map(fill) });
 }

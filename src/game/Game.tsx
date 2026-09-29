@@ -1,6 +1,6 @@
 "use client";
 
-import { dialogue, site } from "@content";
+import { site } from "@content";
 import { useEffect, useRef } from "react";
 import { directMusic } from "./audio/director";
 import { sound } from "./audio/sound";
@@ -10,17 +10,22 @@ import { bindKeyboard } from "./engine/keyboard";
 import { parseTimeOverride, timeOfDay } from "./engine/time";
 import { loadSettings } from "./state/settings";
 import { useGame } from "./state/store";
-import { fill } from "./text";
 import { ContentScreens } from "./ui/ContentScreens";
+import { IntroScene } from "./ui/IntroScene";
 import { Overlays } from "./ui/Overlays";
 import { SoundToggle } from "./ui/SoundToggle";
+import { TitleScreen } from "./ui/TitleScreen";
 import { TouchControls } from "./ui/TouchControls";
 import { buildWorld } from "./world/compile";
 
-/** The playable town: canvas, everything drawn over it, full screens, and the touch pad. */
+/**
+ * The playable town: canvas, the title screen and intro, everything drawn over the
+ * town, full screens, and the touch pad.
+ */
 export function Game() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
+  const stage = useGame((state) => state.stage);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -36,7 +41,8 @@ export function Game() {
         game.startBattle();
         return true;
       },
-      busy: () => false,
+      // Nothing moves on the title screen or in the intro.
+      busy: () => useGame.getState().stage !== "play",
       sfx: (name) => sound.sfx(name),
       reducedMotion: () => motion.matches,
       timeOfDay: () => {
@@ -48,13 +54,14 @@ export function Game() {
     useGame.setState({ travel: (to, spot) => engine.warpTo(to, spot) });
     const unbindKeyboard = bindKeyboard(window, input);
     engine.start();
-    useGame.getState().say({ pages: dialogue.welcome.map(fill) });
     return () => {
       engine.stop();
       stopMusic();
       // No music on the pages you leave for, like the classic résumé.
       sound.setEnabled(false);
       unbindKeyboard();
+      // Leave nothing open (a dialog, a battle) for when the visitor comes back.
+      useGame.getState().closeAll();
       useGame.setState({ travel: null });
       engineRef.current = null;
     };
@@ -73,6 +80,8 @@ export function Game() {
           onPointerUp={(event) => engineRef.current?.tap(event.clientX, event.clientY)}
         />
         <Overlays />
+        {stage === "title" && <TitleScreen />}
+        {stage === "intro" && <IntroScene />}
       </div>
       <div className="game-bar">
         <SoundToggle />

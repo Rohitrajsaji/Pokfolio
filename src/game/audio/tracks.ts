@@ -7,7 +7,7 @@
 import { parsePattern, type NoteEvent } from "./notes";
 
 export type Channel = "lead" | "harmony" | "bass" | "drums";
-export type TrackId = "town" | "indoor" | "battle" | "caught" | "evolved";
+export type TrackId = "title" | "town" | "indoor" | "battle" | "caught" | "evolved";
 
 export interface TrackSpec {
   bpm: number;
@@ -149,6 +149,45 @@ export const TRACKS: Readonly<Record<TrackId, TrackSpec>> = {
         repeat("k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2", 7),
         "k:2 h:2 s:2 h:2 s:1 s:1 s:2 s:2 s:2",
       ),
+    },
+  },
+
+  // The title screen: a hopeful fanfare in G major.
+  title: {
+    bpm: 108,
+    loop: true,
+    channels: {
+      lead: bars(
+        "G5:4 B5:4 D6:6 B5:2",
+        "A5:4 F#5:4 D5:4 F#5:4",
+        "E5:4 G5:4 B5:6 G5:2",
+        "E5:4 G5:4 C6:8",
+        "D6:4 B5:4 G5:4 B5:4",
+        "A5:4 D6:4 F#6:6 D6:2",
+        "C6:4 B5:2 A5:2 G5:4 E5:4",
+        "A5:4 B5:2 A5:2 F#5:4 D5:2 r:2",
+      ),
+      harmony: bars(
+        broken("G3", "B3", "D4"),
+        broken("F#3", "A3", "D4"),
+        broken("E3", "G3", "B3"),
+        broken("E3", "G3", "C4"),
+        broken("G3", "B3", "D4"),
+        broken("F#3", "A3", "D4"),
+        broken("E3", "G3", "C4"),
+        broken("F#3", "A3", "D4"),
+      ),
+      bass: bars(
+        bounce("G2", "G3", "D3"),
+        bounce("D2", "D3", "A2"),
+        bounce("E2", "E3", "B2"),
+        bounce("C2", "C3", "G2"),
+        bounce("G2", "G3", "D3"),
+        bounce("D2", "D3", "A2"),
+        bounce("C2", "C3", "G2"),
+        bounce("D2", "D3", "A2"),
+      ),
+      drums: repeat("k:4 h:4 s:4 h:4", 8),
     },
   },
 

@@ -49,7 +49,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="mx-auto max-w-3xl px-4 pb-4 text-center text-[0.7rem] leading-snug text-white/40">
+      <footer className="mx-auto max-w-3xl px-4 pb-4 text-center text-[0.7rem] leading-snug text-white/60">
         {site.disclaimer}
       </footer>
     </div>

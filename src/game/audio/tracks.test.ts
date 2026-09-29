@@ -11,8 +11,13 @@ describe("the soundtrack", () => {
     expect(track.byStep[0].length).toBeGreaterThan(0);
   });
 
-  it("loops the area and battle themes, and plays the jingles once", () => {
-    expect(ids.filter((id) => TRACKS[id].loop).sort()).toEqual(["battle", "indoor", "town"]);
+  it("loops the themes and plays the jingles once", () => {
+    expect(ids.filter((id) => TRACKS[id].loop).sort()).toEqual([
+      "battle",
+      "indoor",
+      "title",
+      "town",
+    ]);
   });
 
   it("keeps every note in a comfortable range", () => {

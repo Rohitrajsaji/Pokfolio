@@ -15,6 +15,18 @@ export const dialogue = {
     evolved: "Congratulations! Your {from} evolved into {to}!",
     done: "{to} is fully evolved... for now!",
   },
+  /** The short scene after the title screen. PROF. {name} does the talking. */
+  intro: {
+    speaker: "PROF. {name}",
+    lines: [
+      "Hello there! Welcome to {town}!",
+      "I'm PROF. {name}. People call me the AI ENGINEER.",
+      "This town is where legacy apps evolve and AI agents are born.",
+      "Wander in to see my projects, career and skills. And watch the tall grass!",
+      "A wild {wild} lives there. Catching it is the best way to get in touch.",
+      "Your adventure begins now!",
+    ],
+  },
   /** The POKé MART clerk. {item} is the TM the visitor tried to buy. */
   shop: {
     greeting: "Welcome! These TMs teach all of {name}'s skills. Take a look!",

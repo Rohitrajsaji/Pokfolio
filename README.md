@@ -4,10 +4,10 @@ A portfolio you can play. Walk around a pixel-art town, step into buildings to r
 projects and experience, and catch the wild ROHIT in the tall grass to get in touch. Recruiters
 in a hurry can skip straight to the classic résumé at [`/resume`](http://localhost:3000/resume).
 
-> **Status:** Phases 1–7 of 8 are done: content, classic résumé, SEO, the pixel-art kit, the
-> playable town, menus, every content screen, the professor's Q&A, the catch-to-hire battle,
-> and music, sound effects and cries. Still to come: the title screen, social image, final
-> polish and deploy. The art kit is previewable at
+> **Status:** Built and ready to deploy: the title screen and intro, the playable town, menus,
+> every content screen, the professor's Q&A, the catch-to-hire battle, music and sound effects,
+> a favicon and a share image. The one step left is publishing it (see
+> [Deploying](#deploying)). The art kit is previewable at
 > [`/dev/sprites`](http://localhost:3000/dev/sprites) while `npm run dev` is running.
 
 ### How to play
@@ -19,6 +19,9 @@ in a hurry can skip straight to the classic résumé at [`/resume`](http://local
 | X or Backspace     | B            | Back; hold to run                           |
 | M or Esc           | START        | Open the menu                               |
 | Shift              |              | Run                                         |
+
+The game opens on a title screen: press START (or A, or tap it). The professor's short intro
+follows, and SKIP, START or ESC cuts straight to the town.
 
 Every building opens part of the portfolio: the Lab holds the projects (Pokédex), the Career Gym
 the experience, the house the Trainer Card, the Poké Mart the skills and the Pokémon Center the
@@ -32,7 +35,9 @@ come from PokeAPI.
 
 Prof. Rohit's sprite is drawn from `avatar` in [`content/site.ts`](content/site.ts): hairstyle
 (`short`, `long`, `buns`, `bald` or `cap`), hair colour, skin tone, glasses, and shirt, coat and
-trouser colours. Shadows and highlights are worked out automatically.
+trouser colours. Shadows and highlights are worked out automatically. The favicon, the
+home-screen icon and the share image shown when someone posts a link are drawn from the same
+settings and from `gameTitle`, so they follow when you rebuild.
 
 ## Quick start
 
@@ -58,7 +63,7 @@ files.
 | [`content/world.ts`](content/world.ts)             | The town map, buildings, rooms, signs and what everyone says       | The town                              |
 | [`content/qa.ts`](content/qa.ts)                   | The professor's topics, keywords and answers                       | Prof. Rohit in the Lab                |
 | [`content/battle.ts`](content/battle.ts)           | Your partner's moves, levels and every battle line                 | The battle in the tall grass          |
-| [`content/dialogue.ts`](content/dialogue.ts)       | Other game text: welcome, evolution, the Mart clerk                | Around the game                       |
+| [`content/dialogue.ts`](content/dialogue.ts)       | Other game text: the intro, welcome, evolution, the Mart clerk     | Around the game                       |
 
 The shapes are defined in [`content/types.ts`](content/types.ts), so your editor autocompletes
 fields and the build fails if something is missing or misspelled. Game text can use `{name}`,
@@ -102,9 +107,21 @@ Copy an entry in `content/projects.ts` and change it:
 
 ## Deploying
 
-The site is fully static and deploys to Vercel with no configuration: import the repository in
-Vercel and push. Once you have a custom domain, set `NEXT_PUBLIC_SITE_URL` (for example
-`https://rohitrajsaji.dev`) so canonical links, the sitemap and social cards use it.
+The site is fully static, so it deploys to Vercel with no configuration.
+
+1. Put the project on GitHub: create an empty repository, then
+   `git remote add origin <the repository's URL>` and `git push -u origin main`.
+2. On [vercel.com](https://vercel.com) choose **Add New → Project**, import the repository and
+   press **Deploy**. Vercel recognises Next.js by itself.
+3. On a custom domain, add the environment variable `NEXT_PUBLIC_SITE_URL` (for example
+   `https://rohitrajsaji.dev`) and redeploy, so canonical links, the sitemap and the share image
+   use it. On the free `*.vercel.app` address nothing needs setting.
+
+Without GitHub, the Vercel CLI works from this folder: `npx vercel` makes a preview and
+`npx vercel --prod` goes live. The first run asks you to log in.
+
+Once it's live, paste the address into a link preview, such as LinkedIn's Post Inspector, to see
+the share image.
 
 ## Credits
 

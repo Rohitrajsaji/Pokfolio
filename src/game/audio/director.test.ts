@@ -14,14 +14,22 @@ function recorder() {
 
 const soundOn = { ...DEFAULT_SETTINGS, sound: true };
 
-beforeEach(() => useGame.setState({ mapId: "town", overlay: null, settings: DEFAULT_SETTINGS }));
+beforeEach(() =>
+  useGame.setState({ stage: "play", mapId: "town", overlay: null, settings: DEFAULT_SETTINGS }),
+);
 
 describe("musicFor", () => {
   it("plays the town theme outdoors, the indoor theme inside, and battle music in battles", () => {
-    expect(musicFor({ mapId: "town", overlay: null })).toBe("town");
-    expect(musicFor({ mapId: "lab", overlay: null })).toBe("indoor");
-    expect(musicFor({ mapId: "town", overlay: { kind: "battle", id: 1 } })).toBe("battle");
-    expect(musicFor({ mapId: "town", overlay: { kind: "menu" } })).toBe("town");
+    const play = { stage: "play" } as const;
+    expect(musicFor({ ...play, mapId: "town", overlay: null })).toBe("town");
+    expect(musicFor({ ...play, mapId: "lab", overlay: null })).toBe("indoor");
+    expect(musicFor({ ...play, mapId: "town", overlay: { kind: "battle", id: 1 } })).toBe("battle");
+    expect(musicFor({ ...play, mapId: "town", overlay: { kind: "menu" } })).toBe("town");
+  });
+
+  it("plays the title theme on the title screen and in the intro, wherever the map says", () => {
+    expect(musicFor({ stage: "title", mapId: "town", overlay: null })).toBe("title");
+    expect(musicFor({ stage: "intro", mapId: "lab", overlay: null })).toBe("title");
   });
 });
 
@@ -37,6 +45,16 @@ describe("directMusic", () => {
     useGame.setState({ overlay: { kind: "battle", id: 7 } });
     useGame.setState({ overlay: null });
     expect(calls).toEqual(["off", "on", "indoor", "town", "battle", "town"]);
+    stop();
+  });
+
+  it("plays the title theme until the adventure begins", () => {
+    const { player, calls } = recorder();
+    useGame.setState({ stage: "title", settings: soundOn });
+    const stop = directMusic(useGame, player);
+    useGame.setState({ stage: "intro" });
+    useGame.setState({ stage: "play" });
+    expect(calls).toEqual(["on", "title", "town"]);
     stop();
   });
 

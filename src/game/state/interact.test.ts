@@ -1,5 +1,7 @@
+import { dialogue } from "@content";
 import { beforeEach, describe, expect, it } from "vitest";
-import { runInteraction } from "./interact";
+import { fill } from "../text";
+import { beginAdventure, runInteraction } from "./interact";
 import { useGame, type Overlay } from "./store";
 
 function openDialog() {
@@ -56,5 +58,14 @@ describe("runInteraction", () => {
       request: { screen: "jobs" },
       back: null,
     });
+  });
+});
+
+describe("beginAdventure", () => {
+  it("starts the game and explains the controls", () => {
+    useGame.setState({ stage: "intro" });
+    beginAdventure();
+    expect(useGame.getState().stage).toBe("play");
+    expect(openDialog().pages).toEqual(dialogue.welcome.map(fill));
   });
 });
