@@ -115,7 +115,8 @@ Copy an entry in `content/projects.ts` and change it:
 ### Testing
 
 `npm run check` runs the typecheck, lint, unit tests and a production build. `npm run e2e` adds
-real-browser smoke tests in the Chrome installed on your machine (window shapes from a 320px
+real-browser smoke tests in Chrome and Playwright's WebKit (Safari); set `E2E_FIREFOX=1` to add
+Firefox (`npx playwright install webkit firefox` first) (window shapes from a 320px
 phone to 4K, keyboard-only play, the printed résumé, PokeAPI offline, reduced motion). It builds
 the site and serves it on port 3200 itself.
 
